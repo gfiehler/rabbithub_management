@@ -1,0 +1,20 @@
+internal v18
+
+added Re-subcscribe to subscription detail screen
+
+added table sorting for subscriptions and consumers
+
+fixed delete
+
+TODO add download upload subscriptions
+
+better placement of the re-subscribe button
+
+pagination
+
+publish message to subscriber
+
+
+
+
+

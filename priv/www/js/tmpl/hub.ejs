@@ -1,0 +1,228 @@
+<h1>RabbitHub</h1>
+<div class="section-hidden">
+    <h2>Subscriptions</h2>
+    <div class="hider updatable">
+        <table class="list">
+         <thead>
+          <tr>
+            <th><%= fmt_sort('Virtual host', 'vhost') %></th>
+            <th><%= fmt_sort('Resource', 'resource_name') %></th>
+            <th><%= fmt_sort('Topic', 'topic') %></th>
+            <th><%= fmt_sort('Callback URL', 'callback') %></th>
+            <th><%= fmt_sort('Lease Expiration', 'lease_expiry_time_microsec') %></th>
+          </tr>
+         </thead>
+         <tbody>
+        <%
+         for (var i = 0; i < hub.subscriptions.length; i++) {
+            var subscription = hub.subscriptions[i];   
+        %>
+          <tr<%= alt_rows(i)%>>
+            <td><%= link_subscriptions(subscription.vhost, subscription.vhost, subscription.resource_type, subscription.resource_name, subscription.topic, subscription.callback) %></td>
+            <td><%= fmt_rabbithub_endpoint(subscription.resource_type, subscription.resource_name) %></td>
+            <td><%= subscription.topic %></td>
+            <td><%= subscription.callback %></td>
+            <td><%= fmt_micro_to_date(subscription.lease_expiry_time_microsec) %></td>
+          </tr>
+        <% } %>
+         </tbody>
+        </table>
+    </div>
+</div>
+<div class="section-hidden">    
+    <h2>Consumers</h2>
+    <div class="hider updatable">
+        <table class="list">
+         <thead>
+          <tr>
+            <th><%= fmt_sort('Virtual host', 'vhost') %></th>
+            <th><%= fmt_sort('Resource', 'resource_name') %></th>
+            <th><%= fmt_sort('Topic', 'topic') %></th>
+            <th><%= fmt_sort('Callback URL', 'callback') %></th>
+            <th>Pid</th>
+            <th><%= fmt_sort('Node', 'node') %></th>    
+            <th><%= fmt_sort('Status', 'status') %></th>
+          </tr>
+         </thead>
+         <tbody>
+        <%
+         for (var i = 0; i < consumers.consumers.length; i++) {
+            var consumer = consumers.consumers[i];
+        %>
+          <tr<%= alt_rows(i)%>>
+            <td><%= consumer.vhost %></td>
+            <td><%= fmt_rabbithub_endpoint(consumer.resource_type, consumer.resource_name) %></td>
+            <td><%= consumer.topic %></td>
+            <td><%= consumer.callback %></td>
+            <td><%= consumer.pid %></td>
+            <td><%= consumer.node %></td>  
+          <% if (consumer.status == 'running') { %>    
+            <td colspan="5"><%= fmt_state('green', consumer.status) %></td>
+          <% } else { %>
+            <td colspan="5"><%= fmt_state('red', consumer.status) %></td>
+          <% } %>
+          </tr>
+        <% } %>
+         </tbody>
+        </table>
+    </div>
+</div>
+<div class="section-hidden"> 
+    <h2>Consumer Errors Posting to Subscribers</h2>
+    <div class="hider updatable">
+        <table class="list">
+         <thead>
+          <tr>
+            <th>Virtual host</th>
+            <th>Resource</th>
+            <th>Topic</th>
+            <th>Callback URL</th>
+            <th>Error Count</th>
+            <th>First Error Time</th>
+            <th>Last Error Time</th>    
+          </tr>
+         </thead>
+         <tbody>
+        <%
+         for (var i = 0; i < errors.errors.length; i++) {
+            var error = errors.errors[i];
+        %>
+          <tr<%= alt_rows(i)%>>
+            <td><%= error.vhost %></td>
+            <td><%= fmt_rabbithub_endpoint(error.resource_type, error.resource_name) %></td>
+            <td><%= error.topic %></td>
+            <td><%= error.callback %></td>
+            <td><%= error.error_count %></td>
+            <td><%= fmt_micro_to_date(error.first_error_time_microsec) %></td>
+            <td><%= fmt_micro_to_date(error.last_error_time_microsec) %></td>    
+          </tr>
+        <% } %>
+         </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="section-hidden">
+  <h2>Add a new subscriber</h2>
+  <div class="hider">
+    <form action="#/hub/subscriptions" method="post">
+      <input type="hidden" name="component" value="hub"/>
+      <table class="form">
+<% if (vhosts_interesting) { %>
+        <tr>
+          <th><label>Virtual host:</label></th>
+          <td>
+            <select name="vhost">
+              <% for (var i = 0; i < vhosts.length; i++) { %>
+              <option value="<%= fmt_string(vhosts[i].name) %>"><%= fmt_string(vhosts[i].name) %></option>
+              <% } %>
+            </select>
+          </td>
+        </tr>
+<% } else { %>
+        <tr><td><input type="hidden" name="vhost" value="<%= fmt_string(vhosts[0].name) %>"/></td></tr>
+<% } %>       
+        <tr>
+          <th>
+            <label>
+              Queue or Exchange
+            </label>
+          </th>
+          <td>
+            <select name="queue-or-exchange">
+              <option value="q">Queue</option>
+              <option value="x">Exchange</option>
+            </select>
+          </td>
+        </tr>
+		<tr>
+          <th><label>Queue/Exchange Name:</label></th>
+          <td><input type="text" name="q-or-x-name"/><span class="mand">*</span></td>
+        </tr>
+		<tr>
+          <th><label>Callback URI:</label></th>
+          <td><input type="text" name="callback-uri" value="http://"/><span class="mand">*</span></td>
+        </tr>
+		<tr>
+          <th><label>Topic:</label></th>
+          <td><input type="text" name="topic"/><span class="mand">*</span></td>
+        </tr>
+		<tr>
+          <th><label>Lease:</label></th>
+          <td><input type="text" name="lease-seconds"/><span class="mand">*</span> seconds</td>		  
+        </tr>		
+      </table>
+      <input type="submit" value="Add Subscription"/>
+    </form>
+  </div>
+</div>
+
+<div class="section-hidden">
+    <h2>Configuration</h2>
+    <div class="hider updatable">        
+        <table border=1>
+            <tr>
+                <th>Environment Variable <span class="help" id="environment"></span></th>
+                <th>Value</th>
+            </tr>        
+            <tr>
+                <td><b>requeue_on_http_post_error</b> <span class="help" id="requeue_on_http_post_error"></td>
+                <td><%= environment.environment.requeue_on_http_post_error %></td>                
+            </tr>
+            <tr>
+                <td><b>unsubscribe_on_http_post_error</b><span class="help" id="unsubscribe_on_http_post_error"></td>
+                <td><%= environment.environment.unsubscribe_on_http_post_error %></td>                
+            </tr>
+            <tr>
+                <td><b>unsubscribe_on_http_post_error_limit</b><span class="help" id="unsubscribe_on_http_post_error_limit"></td>
+                <td><%= environment.environment.unsubscribe_on_http_post_error_limit %></td>                
+            </tr>
+            <tr>
+                <td><b>unsubscribe_on_http_post_error_timeout_microseconds</b><span class="help" id="unsubscribe_on_http_post_error_timeout_microseconds"></td>
+                <td><%= environment.environment.unsubscribe_on_http_post_error_timeout_microseconds %></td>                
+            </tr>
+            <tr>
+                <td><b>wait_for_consumer_restart_milliseconds</b><span class="help" id="wait_for_consumer_restart_milliseconds"></td>
+                <td><%= environment.environment.wait_for_consumer_restart_milliseconds %></td>                
+            </tr>
+            <tr>
+                <td><b>ha_consumers</b><span class="help" id="ha_consumers"></td>
+                <td><%= environment.environment.ha_consumers %></td>                
+            </tr>
+            <tr>
+                <td><b>log_http_post_request</b><span class="help" id="log_http_post_request"></td>
+                <td><%= environment.environment.log_http_post_request %></td>                
+            </tr>
+            <tr>
+                <td><b>append_hub_topic_to_callback</b><span class="help" id="append_hub_topic_to_callback"></td>
+                <td><%= environment.environment.append_hub_topic_to_callback %></td>                
+            </tr>
+            <tr>
+                <td><b>include_servername_in_consumer_tag</b><span class="help" id="include_servername_in_consumer_tag"></td>
+                <td><%= environment.environment.include_servername_in_consumer_tag %></td>                
+            </tr>
+            <tr>
+                <td><b>default_username</b><span class="help" id="default_username"></td>
+                <td><%= environment.environment.default_username %></td>                
+            </tr>
+            <tr>
+                <td><b>listener port</b><span class="help" id="listener"></td>
+                <td><%= environment.environment.listener.port %></td>                
+            </tr>
+            <tr>
+                <td><b>http_client_options: max_keep_alive_length</b><span class="help" id="http_client_options"></td>
+                <td><%= environment.environment.http_client_options.max_keep_alive_length %></td>                
+            </tr>
+            <tr>
+                <td><b>http_client_options: max_pipeline_length</b><span class="help" id="http_client_options"></td>
+                <td><%= environment.environment.http_client_options.max_pipeline_length %></td>                
+            </tr>
+            <tr>
+                <td><b>http_client_options: max_sessions</b><span class="help" id="http_client_options"></td>
+                <td><%= environment.environment.http_client_options.max_sessions %></td>                
+            </tr>
+
+        </table>
+    </div>
+</div>
+

@@ -1,0 +1,58 @@
+<h1>Lease </h1>
+
+<div class="section">
+  <h2>Overview</h2>
+  <div class="hider">
+    <table class="facts">     
+      <tr>
+        <th>Virtual host</th>
+        <td><%= hub.subscriptions[0].vhost %></td>
+      </tr>      
+      <tr>
+        <th>Resource Type</th>
+        <td><%= hub.subscriptions[0].resource_type %></td>
+      </tr>      
+      <tr>
+      <tr>
+        <th>Resource Name</th>
+        <td><%= hub.subscriptions[0].resource_name %></td>
+      </tr>      
+      <tr>
+        <th>Topic</th>
+        <td><%= hub.subscriptions[0].topic %></td>
+      </tr>
+      <tr>
+        <th>Callback</th>
+        <td><%= hub.subscriptions[0].callback %></td>
+      </tr>
+      <tr>
+        <th>Expiration</th>
+        <td><%= fmt_micro_to_date(hub.subscriptions[0].lease_expiry_time_microsec) %></td>
+      </tr>     
+    </table>
+  </div>
+</div>
+
+<div class="section-hidden">
+  <h2>Delete/Re-Subscribe this Lease</h2>
+  <div class="hider">
+    <form action="#/hub/subscriptions" method="delete" class="confirm">
+      <input type="hidden" name="vhost" value="<%= fmt_string(hub.subscriptions[0].vhost) %>"/>
+      <input type="hidden" name="type" value="<%= fmt_string(hub.subscriptions[0].resource_type) %>"/>      
+      <input type="hidden" name="resource" value="<%= fmt_string(hub.subscriptions[0].resource_name) %>"/>
+      <input type="hidden" name="topic" value="<%= fmt_string(hub.subscriptions[0].topic) %>"/>
+      <input type="hidden" name="callback" value="<%= fmt_string(hub.subscriptions[0].callback) %>"/>
+      <input type="submit" value="Delete"/>
+    </form>
+  
+    <form action="#/hub/subscriptions" method="put" class="confirm">
+      <input type="hidden" name="vhost" value="<%= fmt_string(hub.subscriptions[0].vhost) %>"/>
+      <input type="hidden" name="type" value="<%= fmt_string(hub.subscriptions[0].resource_type) %>"/>      
+      <input type="hidden" name="resource" value="<%= fmt_string(hub.subscriptions[0].resource_name) %>"/>
+      <input type="hidden" name="topic" value="<%= fmt_string(hub.subscriptions[0].topic) %>"/>
+      <input type="hidden" name="callback" value="<%= fmt_string(hub.subscriptions[0].callback) %>"/>
+      <input type="hidden" name="lease" value="<%= fmt_string(hub.subscriptions[0].lease_expiry_time_microsec) %>"/>
+      <input type="submit" value="Re-Subscribe"/>
+    </form>
+  </div>
+</div>
