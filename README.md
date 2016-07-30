@@ -1,4 +1,6 @@
 # Features
+(only works with https://github.com/gfiehler/rabbithub/tree/3.6.2-Feature-Updates)
+
 Adds Admin page for managing RabbitHub Functionality.
 
 Including
