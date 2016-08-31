@@ -28,31 +28,148 @@
       <tr>
         <th>Expiration</th>
         <td><%= fmt_micro_to_date(hub.subscriptions[0].lease_expiry_time_microsec) %></td>
-      </tr>     
+      </tr>
+      <tr>
+        <th>Lease Seconds</th>
+        <td><%= hub.subscriptions[0].lease_seconds %></td>
+      </tr> 
+      <tr>
+        <th>HA Mode</th>
+        <td><%= hub.subscriptions[0].ha_mode %></td>
+      </tr> 
+      <tr>
+        <th>Status</th>
+       <% if (hub.subscriptions[0].status == 'active') { %>    
+          <td colspan="5"><%= fmt_state('green',  hub.subscriptions[0].status) %></td>
+       <% } else { %>
+          <td colspan="5"><%= fmt_state('red',  hub.subscriptions[0].status) %></td>
+       <% } %>
+      </tr>      
     </table>
   </div>
 </div>
-
 <div class="section-hidden">
-  <h2>Delete/Re-Subscribe this Lease</h2>
-  <div class="hider">
-    <form action="#/hub/subscriptions" method="delete" class="confirm">
-      <input type="hidden" name="vhost" value="<%= fmt_string(hub.subscriptions[0].vhost) %>"/>
-      <input type="hidden" name="type" value="<%= fmt_string(hub.subscriptions[0].resource_type) %>"/>      
-      <input type="hidden" name="resource" value="<%= fmt_string(hub.subscriptions[0].resource_name) %>"/>
-      <input type="hidden" name="topic" value="<%= fmt_string(hub.subscriptions[0].topic) %>"/>
-      <input type="hidden" name="callback" value="<%= fmt_string(hub.subscriptions[0].callback) %>"/>
-      <input type="submit" value="Delete"/>
-    </form>
-  
-    <form action="#/hub/subscriptions" method="put" class="confirm">
+  <h2>Manage Subscription</h2>
+  <div class="hider">       
+    <%if (hub.subscriptions[0].status == "inactive") { %>  
+    <form action="#/hub/subscriptions" method="put">
       <input type="hidden" name="vhost" value="<%= fmt_string(hub.subscriptions[0].vhost) %>"/>
       <input type="hidden" name="type" value="<%= fmt_string(hub.subscriptions[0].resource_type) %>"/>      
       <input type="hidden" name="resource" value="<%= fmt_string(hub.subscriptions[0].resource_name) %>"/>
       <input type="hidden" name="topic" value="<%= fmt_string(hub.subscriptions[0].topic) %>"/>
       <input type="hidden" name="callback" value="<%= fmt_string(hub.subscriptions[0].callback) %>"/>
       <input type="hidden" name="lease" value="<%= fmt_string(hub.subscriptions[0].lease_expiry_time_microsec) %>"/>
-      <input type="submit" value="Re-Subscribe"/>
+      <input type="hidden" name="lease_sec" value="<%= fmt_string(hub.subscriptions[0].lease_seconds) %>"/>      
+      <input type="hidden" name="ha_mode" value="<%= fmt_string(hub.subscriptions[0].ha_mode) %>"/>      
+      <input type="hidden" name="hub_mode" value="<%= fmt_string('subscribe') %>"/>
+      <input type="submit" value="Activate/Resubscribe"/>
     </form>
+   <% } %> 
+   
+   <%if (hub.subscriptions[0].status == "active") { %>     
+    <form action="#/hub/subscriptions" method="put">
+      <input type="hidden" name="vhost" value="<%= fmt_string(hub.subscriptions[0].vhost) %>"/>
+      <input type="hidden" name="type" value="<%= fmt_string(hub.subscriptions[0].resource_type) %>"/>      
+      <input type="hidden" name="resource" value="<%= fmt_string(hub.subscriptions[0].resource_name) %>"/>
+      <input type="hidden" name="topic" value="<%= fmt_string(hub.subscriptions[0].topic) %>"/>
+      <input type="hidden" name="callback" value="<%= fmt_string(hub.subscriptions[0].callback) %>"/>
+      <input type="hidden" name="lease" value="<%= fmt_string(hub.subscriptions[0].lease_expiry_time_microsec) %>"/>
+      <input type="hidden" name="lease_sec" value="<%= fmt_string(hub.subscriptions[0].lease_seconds) %>"/>      
+      <input type="hidden" name="ha_mode" value="<%= fmt_string(hub.subscriptions[0].ha_mode) %>"/>      
+      <input type="hidden" name="hub_mode" value="<%= fmt_string('unsubscribe') %>"/>      
+      <input type="submit" value="Deactivate"/>
+    </form>
+   <% } %>
+       
+    <form action="#/hub/subscriptions" method="delete" class="confirm">
+      <input type="hidden" name="vhost" value="<%= fmt_string(hub.subscriptions[0].vhost) %>"/>
+      <input type="hidden" name="type" value="<%= fmt_string(hub.subscriptions[0].resource_type) %>"/>      
+      <input type="hidden" name="resource" value="<%= fmt_string(hub.subscriptions[0].resource_name) %>"/>
+      <input type="hidden" name="topic" value="<%= fmt_string(hub.subscriptions[0].topic) %>"/>
+      <input type="hidden" name="callback" value="<%= fmt_string(hub.subscriptions[0].callback) %>"/>
+      <input type="hidden" name="lease" value="<%= fmt_string(hub.subscriptions[0].lease_expiry_time_microsec) %>"/>
+      <input type="hidden" name="lease_sec" value="<%= fmt_string(hub.subscriptions[0].lease_seconds) %>"/>      
+      <input type="hidden" name="ha_mode" value="<%= fmt_string(hub.subscriptions[0].ha_mode) %>"/>      
+      <input type="hidden" name="hub_mode" value="<%= fmt_string('unsubscribe') %>"/>      
+      <input type="submit" value="Delete"/>
+    </form>
+   
   </div>
 </div>
+
+<div class="section-hidden">    
+    <h2>Consumers</h2>
+    <div class="hider updatable">
+        <table class="list">
+         <thead>
+          <tr>
+            <th><%= fmt_sort('Virtual host', 'vhost') %></th>
+            <th><%= fmt_sort('Resource', 'resource_name') %></th>
+            <th><%= fmt_sort('Topic', 'topic') %></th>
+            <th><%= fmt_sort('Callback URL', 'callback') %></th>
+            <th>Pid</th>
+            <th><%= fmt_sort('Node', 'node') %></th>    
+            <th><%= fmt_sort('Status', 'status') %></th>
+          </tr>
+         </thead>
+         <tbody>
+        <%
+         for (var i = 0; i < consumers.consumers.length; i++) {
+            var consumer = consumers.consumers[i];
+        %>
+          <tr<%= alt_rows(i)%>>
+            <td><%= consumer.vhost %></td>
+            <td><%= fmt_rabbithub_endpoint(consumer.resource_type, consumer.resource_name) %></td>
+            <td><%= consumer.topic %></td>
+            <td><%= consumer.callback %></td>
+            <td><%= consumer.pid %></td>
+            <td><%= consumer.node %></td>  
+          <% if (consumer.status == 'running') { %>    
+            <td colspan="5"><%= fmt_state('green', consumer.status) %></td>
+          <% } else { %>
+            <td colspan="5"><%= fmt_state('red', consumer.status) %></td>
+          <% } %>
+          </tr>
+        <% } %>
+         </tbody>
+        </table>
+    </div>
+</div>
+<div class="section-hidden"> 
+    <h2>Consumer Errors Posting to Subscribers</h2>
+    <div class="hider updatable">
+        <table class="list">
+         <thead>
+          <tr>
+            <th>Virtual host</th>
+            <th>Resource</th>
+            <th>Topic</th>
+            <th>Callback URL</th>
+            <th>Error Count</th>
+            <th>First Error Time</th>
+            <th>Last Error Time</th>    
+            <th>Last Error Msg</th>
+          </tr>
+         </thead>
+         <tbody>
+        <%
+         for (var i = 0; i < errors.errors.length; i++) {
+            var error = errors.errors[i];
+        %>
+          <tr<%= alt_rows(i)%>>
+            <td><%= error.vhost %></td>
+            <td><%= fmt_rabbithub_endpoint(error.resource_type, error.resource_name) %></td>
+            <td><%= error.topic %></td>
+            <td><%= error.callback %></td>
+            <td><%= error.error_count %></td>
+            <td><%= fmt_micro_to_date(error.first_error_time_microsec) %></td>
+            <td><%= fmt_micro_to_date(error.last_error_time_microsec) %></td>    
+            <td><%= error.last_error_msg %></td>
+          </tr>
+        <% } %>
+         </tbody>
+        </table>
+    </div>
+</div>
+
+    

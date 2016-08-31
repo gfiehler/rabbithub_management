@@ -48,7 +48,11 @@ is_authorized(ReqData, Context) ->
 
 get_hub_overview() ->
       EnvParams =  application:get_all_env(rabbithub),
-      EnvParams2 = lists:keyreplace(default_username, 1, EnvParams, {default_username, list_to_binary(element(2, lists:keyfind(default_username, 1, EnvParams)))}), 
+      EnvParams2 = case lists:keyfind(default_username, 1, EnvParams) of
+        false -> EnvParams;
+        _D -> lists:keyreplace(default_username, 1, EnvParams, {default_username, list_to_binary(element(2, lists:keyfind(default_username, 1, EnvParams)))})
+      end,
+            
       Resp = [{environment, EnvParams2}],
       Resp.
 

@@ -1,0 +1,32 @@
+<h1>Import Results</h1> 
+  <div>
+        <table class="list">
+         <thead>
+          <tr>
+            <th>Vhost</th>
+            <th>Resource Type</th>
+            <th>Resource Name</th>
+            <th>Topic</th>
+            <th>Callback</th>
+            <th>Lease Expiry</th>
+            <th>Status</th>
+          </tr>
+         </thead>
+         <tbody>
+        <%
+         for (var i = 0; i < rabbithub_batch_results.length; i++) {
+            var result = rabbithub_batch_results[i];   
+        %>
+          <tr<%= alt_rows(i)%>>
+            <td><%= result.vhost %></td>
+            <td><%= result.resource_type %></td>
+            <td><%= result.resource_name %></td>
+            <td><%= result.topic %></td>
+            <td><%= result.callback %></td>
+            <td><%= fmt_micro_to_date(result.lease_expiry_time_microsec) %></td>
+            <td><%= format('import-state', result.status) %></td>
+		  </tr>
+		<% } %>  
+		 </tbody>
+        </table>
+</div>

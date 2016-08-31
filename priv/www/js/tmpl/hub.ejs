@@ -5,11 +5,15 @@
         <table class="list">
          <thead>
           <tr>
+            <th><%= fmt_sort('Name', 'name') %></th>
             <th><%= fmt_sort('Virtual host', 'vhost') %></th>
             <th><%= fmt_sort('Resource', 'resource_name') %></th>
             <th><%= fmt_sort('Topic', 'topic') %></th>
             <th><%= fmt_sort('Callback URL', 'callback') %></th>
             <th><%= fmt_sort('Lease Expiration', 'lease_expiry_time_microsec') %></th>
+            <th><%= fmt_sort('Lease Seconds', 'lease_expiry_time_microsec') %></th>
+            <th><%= fmt_sort('HA Mode', 'lease_seconds') %></th>
+            <th><%= fmt_sort('Status', 'status') %></th>            
           </tr>
          </thead>
          <tbody>
@@ -18,11 +22,19 @@
             var subscription = hub.subscriptions[i];   
         %>
           <tr<%= alt_rows(i)%>>
+            <td><%= link_subscriptions(subscription.name, subscription.vhost, subscription.resource_type, subscription.resource_name, subscription.topic, subscription.callback) %></td>
             <td><%= link_subscriptions(subscription.vhost, subscription.vhost, subscription.resource_type, subscription.resource_name, subscription.topic, subscription.callback) %></td>
             <td><%= fmt_rabbithub_endpoint(subscription.resource_type, subscription.resource_name) %></td>
             <td><%= subscription.topic %></td>
             <td><%= subscription.callback %></td>
             <td><%= fmt_micro_to_date(subscription.lease_expiry_time_microsec) %></td>
+            <td><%= subscription.lease_seconds %></td>
+            <td><%= subscription.ha_mode %></td>
+          <% if (subscription.status == 'active') { %>    
+            <td colspan="5"><%= fmt_state('green', subscription.status) %></td>
+          <% } else { %>
+            <td colspan="5"><%= fmt_state('red', subscription.status) %></td>
+          <% } %>
           </tr>
         <% } %>
          </tbody>
@@ -80,6 +92,7 @@
             <th>Error Count</th>
             <th>First Error Time</th>
             <th>Last Error Time</th>    
+            <th>Last Error Msg</th>
           </tr>
          </thead>
          <tbody>
@@ -95,6 +108,7 @@
             <td><%= error.error_count %></td>
             <td><%= fmt_micro_to_date(error.first_error_time_microsec) %></td>
             <td><%= fmt_micro_to_date(error.last_error_time_microsec) %></td>    
+            <td><%= error.last_error_msg %></td>
           </tr>
         <% } %>
          </tbody>
@@ -202,27 +216,88 @@
                 <td><%= environment.environment.include_servername_in_consumer_tag %></td>                
             </tr>
             <tr>
+                <td><b>log_http_headers</b><span class="help" id="log_http_headers"></td>
+                <td><%= environment.environment.log_http_headers %></td>                
+            </tr>
+            <tr>
+                <td><b>validate_callback_on_unsubscribe</b><span class="help" id="validate_callback_on_unsubscribe"></td>
+                <td><%= environment.environment.validate_callback_on_unsubscribe %></td>                
+            </tr>
+            <tr>
+                <td><b>set_correlation_id</b><span class="help" id="set_correlation_id"></td>
+                <td><%= environment.environment.set_correlation_id %></td>                
+            </tr>
+            <tr>
+                <td><b>set_message_id</b><span class="help" id="set_message_id"></td>
+                <td><%= environment.environment.set_message_id %></td>                
+            </tr>
+            
+            <tr>
                 <td><b>default_username</b><span class="help" id="default_username"></td>
                 <td><%= environment.environment.default_username %></td>                
             </tr>
+          <% if ( typeof environment.environment.listener !== 'undefined' ) { %>                                  
+           <% if ( typeof environment.environment.listener.port !== 'undefined' ) { %>                      
             <tr>
                 <td><b>listener port</b><span class="help" id="listener"></td>
                 <td><%= environment.environment.listener.port %></td>                
             </tr>
+           <% } %>
+          <% } %>
+          <% if ( typeof environment.environment.http_client_options !== 'undefined' ) { %>                                  
+           <% if ( typeof environment.environment.http_client_options.max_keep_alive_length !== 'undefined' ) { %>                      
             <tr>
                 <td><b>http_client_options: max_keep_alive_length</b><span class="help" id="http_client_options"></td>
                 <td><%= environment.environment.http_client_options.max_keep_alive_length %></td>                
             </tr>
+           <% } %>
+           <% if ( typeof environment.environment.http_client_options.max_pipeline_length !== 'undefined' ) { %>                      
             <tr>
                 <td><b>http_client_options: max_pipeline_length</b><span class="help" id="http_client_options"></td>
                 <td><%= environment.environment.http_client_options.max_pipeline_length %></td>                
             </tr>
+           <% } %>
+           <% if ( typeof environment.environment.http_client_options.max_sessions !== 'undefined' ) { %>                                            
             <tr>
                 <td><b>http_client_options: max_sessions</b><span class="help" id="http_client_options"></td>
                 <td><%= environment.environment.http_client_options.max_sessions %></td>                
             </tr>
-
+           <% } %>
+          <% } %> 
         </table>
     </div>
 </div>
 
+<div class="section-hidden administrator-only">
+<h2>Import / export definitions</h2>
+<div class="hider">
+  </br>
+  </br>
+  <h3>Export</h3>
+  <a href="/api/hub/subscriptions" class="button" download> <span style="font-size: 16px;"><ul><b>Download Subscriptions To File</b></ul></span></a>
+  </br>
+  </br>
+  <form  method="post" enctype="multipart/form-data" id="importForm" action="#/hub/subscriptions/batch">
+    <table>
+      <tr>        
+        <td>
+          <h3>Import</h3>
+          <p>
+            <label>Definitions file:</label><br/>
+            <input type="file" name="file" id="subfile"/>
+          </p>
+        </td>
+      </tr>      
+      <tr>        
+        <td>
+          <p>            
+            <input type="submit" value="Upload subscription definitions"   />
+          </p>
+        </td>
+      </tr>
+    </table>
+  </form>
+</div>
+</div>
+
+<div id="subscription-import-results"></div>    

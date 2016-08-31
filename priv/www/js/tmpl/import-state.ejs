@@ -1,0 +1,15 @@
+<div>
+        <table class="list">
+         <tbody>
+        <%
+         for (var i = 0; i < consumers.length; i++) {
+            var consumer = consumers[i];   
+        %>
+          <tr<%= alt_rows(i)%>>
+            <td><%= consumer.node %></td>
+            <td><%= consumer.status %></td>           
+		  </tr>
+		<% } %>  
+		 </tbody>
+        </table>
+</div>

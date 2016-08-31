@@ -21,12 +21,13 @@
 -export([dispatcher/0, web_ui/0]).
 
 dispatcher() -> [{["hub", "consumers"],  rabbithub_management_wm_consumers, []},
+                 {["hub", "consumers", vhost, type, resource, topic, callback],  rabbithub_management_wm_consumers, []},                 
                  {["hub", "errors"],  rabbithub_management_wm_errors, []},
+                 {["hub", "errors", vhost, type, resource, topic, callback],  rabbithub_management_wm_errors, []},
                  {["hub", "environment"],  rabbithub_management_wm_environment, []},
                  {["hub", "subscriptions"],  rabbithub_management_wm_subscriptions, []},
                  {["hub", "subscriptions", vhost, type, resource, topic, callback],  rabbithub_management_wm_subscription, []},
-                 {["hub", "subscriptions", vhost, type, resource, topic, callback, lease],  rabbithub_management_wm_subscription, []}].
+                 {["hub", "subscriptions", "batch"],  rabbithub_management_wm_subscriptions, []}].
 
 web_ui()     -> [{javascript, <<"rabbithub.js">>}].
-
 

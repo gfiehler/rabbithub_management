@@ -16,17 +16,17 @@
 
 -module(rabbithub_management_wm_subscriptions).
 
--export([init/1, process_post/2, content_types_provided/2, is_authorized/2, allowed_methods/2, to_json/2, set_subscription_url/5]).
+-export([init/1, process_post/2, content_types_provided/2, is_authorized/2, allowed_methods/2, to_json/2, set_subscription_url/5, content_types_accepted/2, accept_multipart/2]).
 
 -include_lib("rabbitmq_management/include/rabbit_mgmt.hrl").
 -include_lib("amqp_client/include/amqp_client.hrl").
 -include_lib("webmachine/include/webmachine.hrl").
-
+-include("include/rabbithub.hrl").
 %%--------------------------------------------------------------------
 
--record(rabbithub_subscription, {resource, topic, callback}).
+%-record(rabbithub_subscription, {resource, topic, callback}).
 
--record(rabbithub_lease, {subscription, lease_expiry_time_microsec}).
+%-record(rabbithub_lease, {subscription, lease_expiry_time_microsec}).
 
 %%--------------------------------------------------------------------
 
@@ -38,31 +38,62 @@ allowed_methods(ReqData, Context) ->
 
 content_types_provided(ReqData, Context) ->
    {[{"application/json", to_json}], ReqData, Context}.
-   
+
+content_types_accepted(ReqData, Context) ->
+   {[{"application/json", accept_json},
+     {"multipart/form-data", accept_multipart}], ReqData, Context}.
+        
 to_json(ReqData, Context) ->   
     rabbit_mgmt_util:reply(get_hub_leases(ReqData), ReqData, Context).
    
 
-process_post(ReqData, Context) ->       
-    case post_subscription(ReqData) of
-        {ok, {{"HTTP/1.1", ReturnCode, _State}, _Head, Body}} ->
-            case string:to_integer(ReturnCode) >= 200 of
-                true ->
-                    case string:to_integer(ReturnCode) < 300 of
-                        true  -> {{halt, ReturnCode}, success(ReqData), Context};
+process_post(ReqData, Context) ->
+    CT = wrq:get_req_header("Content-type",ReqData),
+    case CT of
+        "application/json" ->
+            case post_subscription(ReqData) of
+                {ok, {{"HTTP/1.1", ReturnCode, _State}, _Head, Body}} ->
+                    case string:to_integer(ReturnCode) >= 200 of
+                        true ->
+                            case string:to_integer(ReturnCode) < 300 of
+                                true  -> {{halt, ReturnCode}, success(ReqData), Context};
+                                false -> {{halt, ReturnCode}, failure(Body, ReqData), Context}
+                            end;    
                         false -> {{halt, ReturnCode}, failure(Body, ReqData), Context}
-                    end;    
-                false -> {{halt, ReturnCode}, failure(Body, ReqData), Context}
+                    end;
+                {error, Reason} ->
+                    {false, failure(Reason, ReqData), Context}
             end;
+        Other ->
+            case re:run(Other, "multipart/form-data.*") of
+                {match, _} ->
+                    accept_multipart(ReqData, Context);
+                _ ->
+                    {{halt, 200}, success(ReqData), Context}
+            end
+    end.           
+            
+accept_multipart(ReqData, Context) ->    
+    Parts = webmachine_multipart:get_all_parts(
+              wrq:req_body(ReqData),
+              webmachine_multipart:find_boundary(ReqData)),
+    Json = get_part("file", Parts),
+    Resp = process_batch(Json, ReqData, Context),
+    case Resp of
+        {ok, {{"HTTP/1.1", ReturnCode, _State}, _Head, Body}} ->
+            BatchResp = wrq:set_resp_header("Content-type", "application/json", wrq:set_resp_body(Body, ReqData)),                
+            {{halt, ReturnCode}, BatchResp, Context};
         {error, Reason} ->
-            {false, failure(Reason, ReqData), Context}
-    end.                   
-
+            {false, failure(Reason, ReqData), Context};
+        Other ->
+            {{halt, 400}, failure(Other, ReqData), Context}
+    end.        
+    
 is_authorized(ReqData, Context) ->
     rabbit_mgmt_util:is_authorized_admin(ReqData, Context).
 
 %%--------------------------------------------------------------------
-
+%%strip_crlf(Str) -> lists:append(string:tokens(Str, "\r\n")).
 
 get_hub_leases(ReqData) ->
      {atomic, Leases} =
@@ -71,22 +102,34 @@ get_hub_leases(ReqData) ->
                                                 [],
                                                 rabbithub_lease)
                            end),
+
         Data = {struct,  [{subscriptions, [
-              [{vhost, element(2,(Lease#rabbithub_lease.subscription)#rabbithub_subscription.resource)},              	              
+              [{name, format_name(Lease)},
+               {vhost, element(2,(Lease#rabbithub_lease.subscription)#rabbithub_subscription.resource)},
                {resource_type, element(3,(Lease#rabbithub_lease.subscription)#rabbithub_subscription.resource)},
-               {resource_name, element(4,(Lease#rabbithub_lease.subscription)#rabbithub_subscription.resource)}, 	     
+               {resource_name, element(4,(Lease#rabbithub_lease.subscription)#rabbithub_subscription.resource)},
                {topic, list_to_binary((Lease#rabbithub_lease.subscription)#rabbithub_subscription.topic)},
                {callback, list_to_binary((Lease#rabbithub_lease.subscription)#rabbithub_subscription.callback)},
-               {lease_expiry_time_microsec, Lease#rabbithub_lease.lease_expiry_time_microsec}]
-        || Lease <- Leases]}]},
-        
-        
+               {lease_expiry_time_microsec, Lease#rabbithub_lease.lease_expiry_time_microsec},
+               {lease_seconds, Lease#rabbithub_lease.lease_seconds},
+               {ha_mode, Lease#rabbithub_lease.ha_mode},
+               {status, Lease#rabbithub_lease.status}]
+	    || Lease <- Leases]}]},
 
 %%sort
     SortColumn = wrq:get_qs_value("sort", none, ReqData),
     SortDirection = list_to_atom(wrq:get_qs_value("sort_reverse", "none", ReqData)),    
     
     SortFun = case SortColumn of
+        "name" -> 
+            case SortDirection of
+                true  -> 
+                    fun(X, Y) -> {element(2, lists:keyfind(name, 1, X))} < {element(2, lists:keyfind(name, 1, Y))} end;
+                false ->
+                    fun(X, Y) -> {element(2, lists:keyfind(name, 1, X))} > {element(2, lists:keyfind(name, 1, Y))} end;
+                none  -> 
+                    fun(X, Y) -> {element(2, lists:keyfind(name, 1, X))} < {element(2, lists:keyfind(name, 1, Y))} end
+            end;
         "vhost" -> 
             case SortDirection of
                 true  -> 
@@ -141,6 +184,33 @@ get_hub_leases(ReqData) ->
                 none  -> 
                     fun(X, Y) -> {element(2, lists:keyfind(lease_expiry_time_microsec, 1, X))} < {element(2, lists:keyfind(lease_expiry_time_microsec, 1, Y))} end
             end;
+        "lease_seconds" -> 
+            case SortDirection of
+                true  -> 
+                    fun(X, Y) -> {element(2, lists:keyfind(lease_seconds, 1, X))} < {element(2, lists:keyfind(lease_seconds, 1, Y))} end;
+                false ->
+                    fun(X, Y) -> {element(2, lists:keyfind(lease_seconds, 1, X))} > {element(2, lists:keyfind(lease_seconds, 1, Y))} end;
+                none  -> 
+                    fun(X, Y) -> {element(2, lists:keyfind(lease_seconds, 1, X))} < {element(2, lists:keyfind(lease_seconds, 1, Y))} end
+            end;
+        "ha_mode" -> 
+            case SortDirection of
+                true  -> 
+                    fun(X, Y) -> {element(2, lists:keyfind(ha_mode, 1, X))} < {element(2, lists:keyfind(ha_mode, 1, Y))} end;
+                false ->
+                    fun(X, Y) -> {element(2, lists:keyfind(ha_mode, 1, X))} > {element(2, lists:keyfind(ha_mode, 1, Y))} end;
+                none  -> 
+                    fun(X, Y) -> {element(2, lists:keyfind(ha_mode, 1, X))} < {element(2, lists:keyfind(ha_mode, 1, Y))} end
+            end;
+        "status" -> 
+            case SortDirection of
+                true  -> 
+                    fun(X, Y) -> {element(2, lists:keyfind(status, 1, X))} < {element(2, lists:keyfind(status, 1, Y))} end;
+                false ->
+                    fun(X, Y) -> {element(2, lists:keyfind(status, 1, X))} > {element(2, lists:keyfind(status, 1, Y))} end;
+                none  -> 
+                    fun(X, Y) -> {element(2, lists:keyfind(status, 1, X))} < {element(2, lists:keyfind(status, 1, Y))} end
+            end;
         none ->
             do_nothing;
         _Other ->
@@ -160,12 +230,16 @@ get_hub_leases(ReqData) ->
             RespList        
     end,  
     FinalResp.
-    
 
+        %%<<AAA/binary, "_", BBB/binary>>,    
+format_name(Lease) ->
+    RName = element(4,(Lease#rabbithub_lease.subscription)#rabbithub_subscription.resource),
+    Topic = list_to_binary((Lease#rabbithub_lease.subscription)#rabbithub_subscription.topic),
+    << RName/binary, "_", Topic/binary>>.
 
 
 post_subscription(ReqData) ->
-    Host = wrq:get_req_header("Host",ReqData),
+    Host = wrq:get_req_header("Host",ReqData),    
     Server = lists:nth(1, string:tokens(Host, ":")),
     Listener =  application:get_env(rabbithub, listener),
     Port = element(2, lists:nth(1, element(2, Listener))),
@@ -192,7 +266,12 @@ post_subscription(ReqData) ->
     Method = post,
     URL = set_subscription_url(Server, PortStr, VhostStr, Queue_Or_ExchangeStr, Queue_Or_Exchange_NameStr),
 
-    Header = [],
+    Authorization = wrq:get_req_header("Authorization",ReqData),
+    %% Header format[{"connection", "close"}] [{"Authorization","Basic Z3JlZ2c6Z3JlZ2c="}].
+    Header = case Authorization of
+        undefined -> [];
+        AuthVal -> [{"Authorization", AuthVal}]
+    end,
     Type = "application/x-www-form-urlencoded",
     Body = "hub.mode=subscribe&hub.callback=" ++ Callback_URIStr ++ "&hub.topic=" ++ TopicStr ++ "&hub.verify=sync&hub.lease_seconds=" ++ Lease_SecondsStr,
 
@@ -232,4 +311,39 @@ response_body(Status, ReqData) ->
         {struct, Status}
       ), ReqData
     ).    
+    
+process_batch(Json, ReqData, _Context) ->
+    Host = wrq:get_req_header("Host",ReqData),    
+    Server = lists:nth(1, string:tokens(Host, ":")),
+    Listener =  application:get_env(rabbithub, listener),
+    Port = element(2, lists:nth(1, element(2, Listener))),
+    PortStr = lists:flatten(io_lib:format("~p", [Port])),    
+    
+
+    %% set other params    
+    Method = post,
+    URL =  "http://" ++ Server ++ ":" ++ PortStr ++ "/subscriptions",
+    Authorization = wrq:get_req_header("Authorization",ReqData),
+    Header = case Authorization of
+        undefined -> [];
+        AuthVal -> [{"Authorization", AuthVal}]
+    end,
+    Type = "application/json",
+
+    %% make http request
+    HTTPOptions = [],
+    Options = [],
+    
+    R = httpc:request(Method, {URL, Header, Type, Json}, HTTPOptions, Options),
+    R.
+
+    
+get_part(Name, Parts) ->
+    %% TODO any reason not to use lists:keyfind instead?
+    Filtered = [Value || {N, _Meta, Value} <- Parts, N == Name],
+    case Filtered of
+        []  -> unknown;
+        [F] -> F
+    end.    
+        
 
