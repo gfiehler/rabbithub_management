@@ -23,12 +23,12 @@ You can build and install it like any other plugin (see
 
 # API
 | Get  | PUT  | DELETE  | POST | Path | Description |
-| ------------- |:-------------:| -----:| ------:| ------:| ------:|
-| col 3 is      | right-aligned | $1600 | apple | 1 | 2 |
-| col 2 is      | centered      |   $12 | banana | 1 | 3 |
-| zebra stripes | are neat      |    $1 | peach | 1 | 4 |
-
-
+| :-------------: |:-------------:| -----:| ------:| ------:| ------:|
+| X |   |   | X | 1 | 2 |
+| X |   | X |   | 1 | 3 |
+|   | X |   |   | 1 | 4 |
+| X |   |   |   | 1 | 4 |
+| X |   |   |   | 1 | 4 |
 You can drive the HTTP API yourself. It installs into the management plugin's API; you should understand that first. Once you do, the additional paths look like:
     
     |GET   | PUT  |DELETE|POST  |Path       |Description|
