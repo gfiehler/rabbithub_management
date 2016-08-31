@@ -21,6 +21,8 @@ Including
 You can build and install it like any other plugin (see
 [the plugin development guide](http://www.rabbitmq.com/plugin-development.html)).
 
+This is dependent on the rabbitmq_management plugin being activated on the rabbitmq instance.
+
 # API
 You can drive the HTTP API yourself. It installs into the management plugin's API; you should understand that first. Once you do, the additional paths look like:
 
@@ -35,13 +37,18 @@ You can drive the HTTP API yourself. It installs into the management plugin's AP
 
  
 # RabbitHub UI
+## Authorization
+RabbitHub Management UI is a Rabbitmq_management UI plugin.  RabbitHub is setup as an admin function.  For a Rabbitmq user to use the RabbitHub Management Plugin, the user must have the `administrator` tag (role).
+For a Rabbitmq_management user to perform export/import the user must have both `administrator,rabbithub_admin` tags (roles).
+
 ## Overview Page
 This page will show a list of subscribers, consumers, http post errors summary and environment variable settings.
 
 The name column for each subscriber is a non-unqiue name that is a combination of the `resource_topic` to the details page.  A truly unique name would also have to inlcude the callback URL, however that was too long to use in the UI.  The name is a link to the details page for that Subscriber.
 
 Import and Export of subscribers can be done via the UI by downloading or uploading JSON files in the following format.  
-Note:  This can be used as backup or to migrate subscribers between environments
+Note:  This can be used as backup or to migrate subscribers between environments.
+
 
 ```javascript
 {
