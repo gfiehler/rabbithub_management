@@ -22,24 +22,18 @@ You can build and install it like any other plugin (see
 [the plugin development guide](http://www.rabbitmq.com/plugin-development.html)).
 
 # API
-| Get  | PUT  | DELETE  | POST | Path | Description |
-| :-------------: |:-------------:| -----:| ------:| ------:| ------:|
-| X |   |   | X | 1 | 2 |
-| X |   | X |   | 1 | 3 |
-|   | X |   |   | 1 | 4 |
-| X |   |   |   | 1 | 4 |
-| X |   |   |   | 1 | 4 |
 You can drive the HTTP API yourself. It installs into the management plugin's API; you should understand that first. Once you do, the additional paths look like:
-    
-    |GET   | PUT  |DELETE|POST  |Path       |Description|
-    |:----:|:----:|:----:|:----:|:----------|:----------|
-    |X     |      |      |X     |/api/hub/subscriptions |A list of all subscribers |
-    |X     |      |X     |      |/api/hub/subscriptions/|Get a subscriber or Delete a subscriber|	
-    |      |X     |      |      |/api/hub/subscriptions/ |hub_mode = subscribe:  |
-    |X     |      |      |      |/api/hub/consumers |Get a list of consumers |
-    |X     |      |      |      |/api/hub/consumers |Get a list of http post to subscriber error tracking |
-    
-    
+
+
+| Get  | PUT  | DELETE  | POST | Path | Description |
+| :---: |:---:| :---:| :---:| :------| :------|
+| X |   |   | X | /api/hub/subscriptions | A list of all subscribers <br> To create a subscriber via a POST <br> to this URL you will need a body like this: <br> `{"vhost":"myvhost","queue-or-exchange":"q or x",<br>"q-or-x-name":"queue name","callback-uri":"http://server:Port/subscriber/callback/url",<br>"topic":"hub.topic value","lease-seconds":"1000000000"}` |
+| X |   | X |   | /api/hub/subscriptions/<br>*vhost*/*resource_type*/*resource_name*/<br>*topic*/*callback* | Get a subscriber or Delete a subscriber |
+|   | X |   |   | /api/hub/subscriptions/<br>*vhost*/*resource_type*/*resource_name*/<br>*topic*/*callback*/*lease_microseconds* | hub_mode = subscribe:<br>  Re-subscribe, this PUT api will re-subscribe this entry.<br> hub_mode = unsubscribe:  Deactivate, <br>this PUT api will deactivate the subscription.<br>This will shutdown all consumers and change status to inactive |
+| X |   |   |   | /api/hub/consumers | Get a list of consumers  |
+| X |   |   |   | /api/hub/errors | Get a list of http post to subscriber errors |
+
+ 
 # RabbitHub UI
 ## Overview Page
 This page will show a list of subscribers, consumers, http post errors summary and environment variable settings.
