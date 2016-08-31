@@ -24,8 +24,6 @@ You can build and install it like any other plugin (see
 # API
 
 You can drive the HTTP API yourself. It installs into the management plugin's API; you should understand that first. Once you do, the additional paths look like:
-
-
     
     |GET   | PUT  |DELETE|POST  |Path       |Description|
     |:----:|:----:|:----:|:----:|:----------|:----------|
@@ -73,9 +71,9 @@ Note:  This can be used as backup or to migrate subscribers between environments
 ## Details Page
 On this page you see a single subscriber and its information along with three possible operations
 
-**Delete:** this button will unsubscribe the entry.  This will remove the subscription and stop all consumers
-**Activate/Resubscribe:**  this button will subscribe the entry to reset if there is an issue.
-**Deactivate:**  this button will unsubscribe or deactivate the entry.  This will shutdown all consumers for this entry and change its status to inactive.
+ 1. **Delete:** this button will unsubscribe the entry.  This will remove the subscription and stop all consumers
+ 2. **Activate/Resubscribe:**  this button will subscribe the entry to reset if there is an issue.
+ 3. **Deactivate:**  this button will unsubscribe or deactivate the entry.  This will shutdown all consumers for this entry and change its status to inactive.
 
 
 
