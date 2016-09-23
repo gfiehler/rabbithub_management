@@ -23,6 +23,7 @@
 -include_lib("webmachine/include/webmachine.hrl").
 -include("include/rabbithub.hrl").
 
+
 %%--------------------------------------------------------------------
 
 %%-record(resource, {virtual_host, kind, name}).
@@ -54,7 +55,7 @@ accept_content(ReqData, Context) ->
     %%      delete then subscribe
     %% else if hub.mode = unsubscribe (deactivate)
     %%      unsubscribe
-    HubMode =  get_hubmode(ReqData),    
+    HubMode =  get_hubmode(ReqData),   
     case HubMode of
         <<"subscribe">> ->            
             TempPS =  post_subscription_qs(ReqData),                                   
@@ -117,7 +118,7 @@ is_authorized(ReqData, Context) ->
 %%--------------------------------------------------------------------
 
 get_hubmode(ReqData) ->
-    Body1 = wrq:req_body(ReqData),     
+    Body1 = wrq:req_body(ReqData),    
     [{Body2, _}] = mochiweb_util:parse_qs(Body1),
     {struct, Body3} = mochijson2:decode(Body2),
     proplists:get_value(<<"hub_mode">>, Body3).
@@ -146,7 +147,7 @@ get_hub_lease(ReqData) ->
                 [] ->                                  
                     Data = {},
                     Data;
-                [Lease] ->
+                [Lease] -> 
                     Data = {struct,  [{subscriptions, 
                         [[{vhost, element(2,(Lease#rabbithub_lease.subscription)#rabbithub_subscription.resource)},              	              
                           {resource_type, element(3,(Lease#rabbithub_lease.subscription)#rabbithub_subscription.resource)},
@@ -156,13 +157,25 @@ get_hub_lease(ReqData) ->
                           {lease_expiry_time_microsec, Lease#rabbithub_lease.lease_expiry_time_microsec},
                           {lease_seconds, Lease#rabbithub_lease.lease_seconds},
                           {ha_mode, Lease#rabbithub_lease.ha_mode},
-                          {status, Lease#rabbithub_lease.status}]]}]},
+                          {maxtps, Lease#rabbithub_lease.max_tps},
+                          {status, Lease#rabbithub_lease.status},
+                          {pseudo_queue, convert_amq_name_to_binary(Lease#rabbithub_lease.pseudo_queue)}]]}]},
                     Data
             end 
     end),
     Data.
+    
+convert_amq_name_to_binary(Amq) ->
+    case Amq of
+        undefined -> undefined;
+        Amq1 ->    
+            Resource = element(2, Amq1),
+            PQName = Resource#resource.name,
+            PQName
+    end.
+            
+        
 %%%%% delete
-
 delete_lease(ReqData) -> 
     Host = wrq:get_req_header("Host",ReqData),
     Server = lists:nth(1, string:tokens(Host, ":")),
@@ -173,7 +186,8 @@ delete_lease(ReqData) ->
     ResourceType = rabbit_mgmt_util:id(type, ReqData),         
     Resource = binary_to_list(rabbit_mgmt_util:id(resource, ReqData)),
     Topic = binary_to_list(rabbit_mgmt_util:id(topic, ReqData)),
-    Callback = binary_to_list(rabbit_mgmt_util:id(callback, ReqData)),
+    Callback = binary_to_list(rabbit_mgmt_util:id(callback, ReqData)),    
+    CallbackEncoded = edoc_lib:escape_uri(Callback),
     Authorization = wrq:get_req_header("Authorization",ReqData),
     %% Header format[{"connection", "close"}] [{"Authorization","Basic Z3JlZ2c6Z3JlZ2c="}].
     Header = case Authorization of
@@ -182,22 +196,21 @@ delete_lease(ReqData) ->
     end,
     
     TypeCode = case ResourceType of
-                "queue" -> "q";
-                "exchange" -> "x";
+                <<"queue">> -> "q";
+                <<"exchange">> -> "x";
                 _ -> "q"
                end,
         
     %% set other params   
     %% fix to accept exchanges need to fix get subscribers to inlcude resourcetypeatom 
     Method = delete,
-    QueryParams = "hub.mode=unsubscribe&hub.callback=" ++ Callback ++ "&hub.topic=" ++ Topic,
-    URL = set_delete_url(Server, PortStr, Vhost, TypeCode, Resource, QueryParams),
-    
+    QueryParams = "hub.mode=unsubscribe&hub.callback=" ++ CallbackEncoded ++ "&hub.topic=" ++ Topic,
+    URL = set_delete_url(Server, PortStr, Vhost, TypeCode, Resource, QueryParams),         
     Type = "application/x-www-form-urlencoded",             
     %% make http request
     HTTPOptions = [],
     Options = [],
-    R = httpc:request(Method, {URL, Header, Type, ""}, HTTPOptions, Options),           
+    R = httpc:request(Method, {URL, Header, Type, ""}, HTTPOptions, Options), 
     R.
 
 set_delete_url( Server, PortStr, "/", TypeCode, Resource, QueryParams ) ->
@@ -221,6 +234,7 @@ unsubscribe_lease(ReqData) ->
     Resource = binary_to_list(rabbit_mgmt_util:id(resource, ReqData)),
     Topic = binary_to_list(rabbit_mgmt_util:id(topic, ReqData)),
     Callback = binary_to_list(rabbit_mgmt_util:id(callback, ReqData)),
+    CallbackEncoded = edoc_lib:escape_uri(Callback),
     Authorization = wrq:get_req_header("Authorization",ReqData),
     %% Header format[{"connection", "close"}] [{"Authorization","Basic Z3JlZ2c6Z3JlZ2c="}].
     Header = case Authorization of
@@ -229,17 +243,16 @@ unsubscribe_lease(ReqData) ->
     end,
     
     TypeCode = case ResourceType of
-                "queue" -> "q";
-                "exchange" -> "x";
+                <<"queue">> -> "q";
+                <<"exchange">> -> "x";
                 _ -> "q"
                end,
-        
     %% set other params   
     %% fix to accept exchanges need to fix get subscribers to inlcude resourcetypeatom 
     Method = post,
     URL = set_unsubscribe_url(Server, PortStr, Vhost, TypeCode, Resource),
     Type = "application/x-www-form-urlencoded",
-    Body = "hub.mode=unsubscribe&hub.callback=" ++ Callback ++ "&hub.topic=" ++ Topic ++ "&hub.verify=sync&hub.lease_seconds=1",
+    Body = "hub.mode=unsubscribe&hub.callback=" ++ CallbackEncoded ++ "&hub.topic=" ++ Topic ++ "&hub.verify=sync&hub.lease_seconds=1",
     %% make http request
     HTTPOptions = [],
     Options = [],
@@ -265,11 +278,23 @@ post_subscription_qs(ReqData) ->
     Resource = binary_to_list(rabbit_mgmt_util:id(resource, ReqData)),
     Topic = binary_to_list(rabbit_mgmt_util:id(topic, ReqData)),
     Callback = binary_to_list(rabbit_mgmt_util:id(callback, ReqData)),
+    CallbackEncoded = edoc_lib:escape_uri(Callback),
+    
     
     %%get body params  
     Body1 = wrq:req_body(ReqData),     
     [{Body2, _}] = mochiweb_util:parse_qs(Body1),
     {struct, Body3} = mochijson2:decode(Body2),
+    MaxTps = proplists:get_value(<<"maxtps">>, Body3),
+    MaxTps2 = case MaxTps of
+        undefined -> 0;
+        N when is_integer(N) -> N;
+        _Other -> 0
+    end,
+    MaxTpsStr = case is_integer(MaxTps2) of
+        true -> lists:flatten(io_lib:format("~p", [MaxTps2]));
+        false -> "0"
+    end,
     Lease_Exp_Micro = binary_to_integer(proplists:get_value(<<"lease">>, Body3)),    
     LeaseSec = binary_to_integer(proplists:get_value(<<"lease_sec">>, Body3)),
     LS2 = case LeaseSec of
@@ -289,8 +314,8 @@ post_subscription_qs(ReqData) ->
             {error, Reason2};
         Lease ->    
             TypeCode = case ResourceType of
-                        "queue" -> "q";
-                        "exchange" -> "x";
+                        <<"queue">> -> "q";
+                        <<"exchange">> -> "x";
                         _ -> "q"
                        end,
                 
@@ -306,7 +331,7 @@ post_subscription_qs(ReqData) ->
     
             Type = "application/x-www-form-urlencoded",
             LeaseStr = lists:flatten(io_lib:format("~p", [Lease])),            
-            Body = "hub.mode=subscribe&hub.callback=" ++ Callback ++ "&hub.topic=" ++ Topic ++ "&hub.verify=sync&hub.lease_seconds=" ++ LeaseStr,
+            Body = "hub.mode=subscribe&hub.callback=" ++ CallbackEncoded ++ "&hub.topic=" ++ Topic ++ "&hub.verify=sync&hub.lease_seconds=" ++ LeaseStr ++ "&hub.maxtps=" ++ MaxTpsStr,
 
             %% make http request
             HTTPOptions = [],

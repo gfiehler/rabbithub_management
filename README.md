@@ -42,7 +42,7 @@ RabbitHub Management UI is a Rabbitmq_management UI plugin.  RabbitHub is setup 
 For a Rabbitmq_management user to perform export/import the user must have both `administrator,rabbithub_admin` tags (roles).
 
 ## Overview Page
-This page will show a list of subscribers, consumers, http post errors summary and environment variable settings.
+This page will show a list of subscribers, consumers, http post errors summary, form to add a new subscriber, environment variable settings, and ability to import/export subscribers in batch.
 
 The name column for each subscriber is a non-unqiue name that is a combination of the `resource_topic` to the details page.  A truly unique name would also have to inlcude the callback URL, however that was too long to use in the UI.  The name is a link to the details page for that Subscriber.
 
@@ -81,6 +81,12 @@ On this page you see a single subscriber and its information along with three po
  1. **Delete:** this button will unsubscribe the entry.  This will remove the subscription and stop all consumers
  2. **Activate/Resubscribe:**  this button will subscribe the entry to reset if there is an issue.
  3. **Deactivate:**  this button will unsubscribe or deactivate the entry.  This will shutdown all consumers for this entry and change its status to inactive.
+ 
+ This page will also show the consumers and Post errors for this subscriber.
+ 
+ Sample Screen Prints
+ 
+ 
 
 
 

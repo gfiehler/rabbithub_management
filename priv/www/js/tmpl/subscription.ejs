@@ -38,13 +38,23 @@
         <td><%= hub.subscriptions[0].ha_mode %></td>
       </tr> 
       <tr>
+        <th>Max TPS</th>
+        <td><%= hub.subscriptions[0].maxtps %></td>
+      </tr>
+      <tr>
         <th>Status</th>
        <% if (hub.subscriptions[0].status == 'active') { %>    
           <td colspan="5"><%= fmt_state('green',  hub.subscriptions[0].status) %></td>
        <% } else { %>
           <td colspan="5"><%= fmt_state('red',  hub.subscriptions[0].status) %></td>
        <% } %>
+      </tr>
+    <% if (hub.subscriptions[0].resource_type == 'exchange') { %>
+      <tr>
+        <th>Pseudo Queue</th>
+        <td><%= hub.subscriptions[0].pseudo_queue %></td>
       </tr>      
+    <% } %>
     </table>
   </div>
 </div>
@@ -60,7 +70,8 @@
       <input type="hidden" name="callback" value="<%= fmt_string(hub.subscriptions[0].callback) %>"/>
       <input type="hidden" name="lease" value="<%= fmt_string(hub.subscriptions[0].lease_expiry_time_microsec) %>"/>
       <input type="hidden" name="lease_sec" value="<%= fmt_string(hub.subscriptions[0].lease_seconds) %>"/>      
-      <input type="hidden" name="ha_mode" value="<%= fmt_string(hub.subscriptions[0].ha_mode) %>"/>      
+      <input type="hidden" name="ha_mode" value="<%= fmt_string(hub.subscriptions[0].ha_mode) %>"/>
+      <input type="hidden" name="maxtps" value="<%= fmt_string(hub.subscriptions[0].maxtps) %>"/>
       <input type="hidden" name="hub_mode" value="<%= fmt_string('subscribe') %>"/>
       <input type="submit" value="Activate/Resubscribe"/>
     </form>

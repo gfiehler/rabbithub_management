@@ -1,6 +1,6 @@
 <h1>RabbitHub</h1>
 <div class="section-hidden">
-    <h2>Subscriptions</h2>
+    <h2>Subscriptions (<%= hub.subscriptions.length %>) </h2>
     <div class="hider updatable">
         <table class="list">
          <thead>
@@ -11,8 +11,9 @@
             <th><%= fmt_sort('Topic', 'topic') %></th>
             <th><%= fmt_sort('Callback URL', 'callback') %></th>
             <th><%= fmt_sort('Lease Expiration', 'lease_expiry_time_microsec') %></th>
-            <th><%= fmt_sort('Lease Seconds', 'lease_expiry_time_microsec') %></th>
-            <th><%= fmt_sort('HA Mode', 'lease_seconds') %></th>
+            <th><%= fmt_sort('Lease Seconds', 'lease_seconds') %></th>
+            <th><%= fmt_sort('HA Mode', 'ha_mode') %></th>
+            <th>Max TPS</th>
             <th><%= fmt_sort('Status', 'status') %></th>            
           </tr>
          </thead>
@@ -30,6 +31,7 @@
             <td><%= fmt_micro_to_date(subscription.lease_expiry_time_microsec) %></td>
             <td><%= subscription.lease_seconds %></td>
             <td><%= subscription.ha_mode %></td>
+            <td><%= subscription.maxtps %></td>            
           <% if (subscription.status == 'active') { %>    
             <td colspan="5"><%= fmt_state('green', subscription.status) %></td>
           <% } else { %>
@@ -42,7 +44,7 @@
     </div>
 </div>
 <div class="section-hidden">    
-    <h2>Consumers</h2>
+    <h2>Consumers (<%= consumers.consumers.length %>) </h2>
     <div class="hider updatable">
         <table class="list">
          <thead>
@@ -80,7 +82,7 @@
     </div>
 </div>
 <div class="section-hidden"> 
-    <h2>Consumer Errors Posting to Subscribers</h2>
+    <h2>Consumer Errors Posting to Subscribers (<%= errors.errors.length %>) </h2>
     <div class="hider updatable">
         <table class="list">
          <thead>
@@ -164,13 +166,16 @@
 		<tr>
           <th><label>Lease:</label></th>
           <td><input type="text" name="lease-seconds"/><span class="mand">*</span> seconds</td>		  
-        </tr>		
+        </tr>	
+        <tr>
+          <th><label>Max TPS:</label></th>
+          <td><input type="number" name="maxtps" min="0" step="1" value="0"/><span class="mand">*</span> tps</td>		  
+        </tr>	
       </table>
       <input type="submit" value="Add Subscription"/>
     </form>
   </div>
 </div>
-
 <div class="section-hidden">
     <h2>Configuration</h2>
     <div class="hider updatable">        
@@ -192,8 +197,8 @@
                 <td><%= environment.environment.unsubscribe_on_http_post_error_limit %></td>                
             </tr>
             <tr>
-                <td><b>unsubscribe_on_http_post_error_timeout_microseconds</b><span class="help" id="unsubscribe_on_http_post_error_timeout_microseconds"></td>
-                <td><%= environment.environment.unsubscribe_on_http_post_error_timeout_microseconds %></td>                
+                <td><b>unsubscribe_on_http_post_error_timeout_milliseconds</b><span class="help" id="unsubscribe_on_http_post_error_timeout_microseconds"></td>
+                <td><%= environment.environment.unsubscribe_on_http_post_error_timeout_milliseconds %></td>                
             </tr>
             <tr>
                 <td><b>wait_for_consumer_restart_milliseconds</b><span class="help" id="wait_for_consumer_restart_milliseconds"></td>
@@ -230,12 +235,12 @@
             <tr>
                 <td><b>set_message_id</b><span class="help" id="set_message_id"></td>
                 <td><%= environment.environment.set_message_id %></td>                
-            </tr>
+            </tr>            
             
             <tr>
                 <td><b>default_username</b><span class="help" id="default_username"></td>
                 <td><%= environment.environment.default_username %></td>                
-            </tr>
+            </tr>            
           <% if ( typeof environment.environment.listener !== 'undefined' ) { %>                                  
            <% if ( typeof environment.environment.listener.port !== 'undefined' ) { %>                      
             <tr>
@@ -244,26 +249,26 @@
             </tr>
            <% } %>
           <% } %>
-          <% if ( typeof environment.environment.http_client_options !== 'undefined' ) { %>                                  
-           <% if ( typeof environment.environment.http_client_options.max_keep_alive_length !== 'undefined' ) { %>                      
+          <% if ( typeof environment.environment.http_client_options !== 'undefined' ) { %>                                             
             <tr>
                 <td><b>http_client_options: max_keep_alive_length</b><span class="help" id="http_client_options"></td>
-                <td><%= environment.environment.http_client_options.max_keep_alive_length %></td>                
+                <td><pre><%= JSON.stringify(environment.environment.http_client_options, null, 2) %></pre></td>                
             </tr>
-           <% } %>
-           <% if ( typeof environment.environment.http_client_options.max_pipeline_length !== 'undefined' ) { %>                      
-            <tr>
-                <td><b>http_client_options: max_pipeline_length</b><span class="help" id="http_client_options"></td>
-                <td><%= environment.environment.http_client_options.max_pipeline_length %></td>                
-            </tr>
-           <% } %>
-           <% if ( typeof environment.environment.http_client_options.max_sessions !== 'undefined' ) { %>                                            
-            <tr>
-                <td><b>http_client_options: max_sessions</b><span class="help" id="http_client_options"></td>
-                <td><%= environment.environment.http_client_options.max_sessions %></td>                
-            </tr>
-           <% } %>
           <% } %> 
+          <% if ( typeof environment.environment.http_request_options !== 'undefined' ) { %>                                             
+            <tr>
+                <td><b>http_request_options</b><span class="help" id="http_request_options"></td>
+                <td><pre><%= JSON.stringify(environment.environment.http_request_options, null, 2) %></pre></td>                
+            </tr>
+          <% } %> 
+            <tr>
+                <td><b>log_maxtps_delay</b><span class="help" id="log_maxtps_delay"></td>
+                <td><%= environment.environment.log_maxtps_delay %></td>                
+            </tr>
+            <tr>
+                <td><b>use_internal_queue_for_pseudo_queue</b><span class="help" id="use_internal_queue_for_pseudo_queue"></td>
+                <td><%= environment.environment.use_internal_queue_for_pseudo_queue %></td>                
+            </tr>
         </table>
     </div>
 </div>

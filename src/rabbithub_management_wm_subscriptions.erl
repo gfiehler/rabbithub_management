@@ -113,6 +113,7 @@ get_hub_leases(ReqData) ->
                {lease_expiry_time_microsec, Lease#rabbithub_lease.lease_expiry_time_microsec},
                {lease_seconds, Lease#rabbithub_lease.lease_seconds},
                {ha_mode, Lease#rabbithub_lease.ha_mode},
+               {maxtps, Lease#rabbithub_lease.max_tps},
                {status, Lease#rabbithub_lease.status}]
 	    || Lease <- Leases]}]},
 
@@ -254,14 +255,19 @@ post_subscription(ReqData) ->
     Callback_URI =  proplists:get_value(<<"callback-uri">>, Body3),
     Topic =  proplists:get_value(<<"topic">>, Body3),
     Lease_Seconds =  proplists:get_value(<<"lease-seconds">>, Body3),
+    MaxTps = binary_to_integer(proplists:get_value(<<"maxtps">>, Body3)),
     VhostStr = binary_to_list(Vhost),
     Queue_Or_ExchangeStr =  binary_to_list(Queue_Or_Exchange),
     Queue_Or_Exchange_NameStr =  binary_to_list(Queue_Or_Exchange_Name),
-    Callback_URIStr =  binary_to_list(Callback_URI),
+    CallbackURIStr =  binary_to_list(Callback_URI),
+    CallbackURIStrEncoded = edoc_lib:escape_uri(CallbackURIStr),
     TopicStr =  binary_to_list(Topic),
     Lease_SecondsStr =  binary_to_list(Lease_Seconds),
-
-
+    
+    MaxTpsStr = case is_integer(MaxTps) of
+        true -> lists:flatten(io_lib:format("~p", [MaxTps]));
+        false -> "0"
+    end,
     %% set other params    
     Method = post,
     URL = set_subscription_url(Server, PortStr, VhostStr, Queue_Or_ExchangeStr, Queue_Or_Exchange_NameStr),
@@ -273,7 +279,7 @@ post_subscription(ReqData) ->
         AuthVal -> [{"Authorization", AuthVal}]
     end,
     Type = "application/x-www-form-urlencoded",
-    Body = "hub.mode=subscribe&hub.callback=" ++ Callback_URIStr ++ "&hub.topic=" ++ TopicStr ++ "&hub.verify=sync&hub.lease_seconds=" ++ Lease_SecondsStr,
+    Body = "hub.mode=subscribe&hub.callback=" ++ CallbackURIStrEncoded ++ "&hub.topic=" ++ TopicStr ++ "&hub.verify=sync&hub.lease_seconds=" ++ Lease_SecondsStr ++ "&hub.maxtps=" ++ MaxTpsStr,
 
     %% make http request
     HTTPOptions = [],
