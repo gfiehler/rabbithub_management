@@ -1,4 +1,6 @@
 # Features
+RabbitHub Management is a Rabbitmq Management Plugin for the RabbitHub Plugin
+Tested with Rabbitmq 3.6.1 and 3.6.2
 (only works with https://github.com/gfiehler/rabbithub/tree/3.6.2-Feature-Updates)
 
 Adds Admin page for managing RabbitHub Functionality.
