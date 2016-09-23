@@ -84,10 +84,33 @@ On this page you see a single subscriber and its information along with three po
  
  This page will also show the consumers and Post errors for this subscriber.
  
- Sample Screen Prints
- 
- 
+## Sample Screen Prints
+### RabbitHub Management Main Screen with all features collapsed
+<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20All%20Hidden.PNG" alt="RabbitHub Managment Main Screen"/>
 
+### RabbitHub Management Main Screen with Subscribers
+<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Subscriptions.PNG" alt="RabbitHub Managment Main Screen:  Subscribers"/>
+
+### RabbitHub Management Main Screen with Consumers
+<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Consumers.PNG" alt="RabbitHub Managment Main Screen:  Consumers"/>
+
+### RabbitHub Management Main Screen with Subscriber Post Errors
+<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Post%20Errors.PNG" alt="RabbitHub Managment Main Screen:  Subscriber Post Errors"/>
+
+### RabbitHub Management Main Screen with Add Subscriber Form
+<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Add%20Subscriber.PNG" alt="RabbitHub Managment Main Screen:  Add Subscriber"/>
+
+### RabbitHub Management Main Screen with Configuration
+<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Configuration.PNG" alt="RabbitHub Managment Main Screen:  Configuration"/>
+ 
+### RabbitHub Management Main Screen with Batch Import/Export
+<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Batch%20Import%20Export.PNG" alt="RabbitHub Managment Main Screen:  Batch Import/Export"/> 
+
+### RabbitHub Management Subscriber Detail Page - Active
+<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Subscriber%20Detail%20Screen.PNG" alt="RabbitHub Managment Main Screen:  Subscriber Detail Page - Active"/> 
+
+### RabbitHub Management Subscriber Detail Page - Inactive
+<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Subscriber%20Detail%20Screen-Inactive.PNG" alt="RabbitHub Managment Main Screen:  Subscriber Detail Page - Inactive"/> 
 
 
 
