@@ -107,7 +107,10 @@ On this page you see a single subscriber and its information along with three po
 <img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Configuration.PNG" alt="RabbitHub Managment Main Screen:  Configuration"/>
  
 ### RabbitHub Management Main Screen with Batch Import/Export
-<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Batch%20Import%20Export.PNG" alt="RabbitHub Managment Main Screen:  Batch Import/Export"/> 
+<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Batch%20Import%20Export.PNG" alt="RabbitHub Managment Main Screen:  Batch Import/Export"/>
+
+### RabbitHub Management Main Screen with Batch Import Results
+<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Batch%20Import%20Results.png" alt="RabbitHub Managment Main Screen:  Batch Import Results"/>
 
 ### RabbitHub Management Subscriber Detail Page - Active
 <img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Subscriber%20Detail%20Screen.PNG" alt="RabbitHub Managment Main Screen:  Subscriber Detail Page - Active"/> 
