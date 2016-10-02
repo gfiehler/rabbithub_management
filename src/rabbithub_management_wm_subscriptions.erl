@@ -249,6 +249,7 @@ post_subscription(ReqData) ->
     Body1 = wrq:req_body(ReqData),     
     [{Body2, _}] = mochiweb_util:parse_qs(Body1),
     {struct, Body3} = mochijson2:decode(Body2),
+    
     Vhost = proplists:get_value(<<"vhost">>, Body3),   
     Queue_Or_Exchange =  proplists:get_value(<<"queue-or-exchange">>, Body3),
     Queue_Or_Exchange_Name =  proplists:get_value(<<"q-or-x-name">>, Body3),
@@ -256,6 +257,29 @@ post_subscription(ReqData) ->
     Topic =  proplists:get_value(<<"topic">>, Body3),
     Lease_Seconds =  proplists:get_value(<<"lease-seconds">>, Body3),
     MaxTps = binary_to_integer(proplists:get_value(<<"maxtps">>, Body3)),
+    HAMode = proplists:get_value(<<"hamode">>, Body3),
+    
+    HAMode1 = binary_to_list(HAMode),
+    HAMode2 = case HAMode1 of
+        [] -> no_ha_mode;
+        AnythingElse -> AnythingElse
+    end,
+
+    HAModeStr =  case HAMode2 of
+        no_ha_mode -> no_ha_mode;
+        _OtherModes ->    
+            case string:to_integer(HAMode2) of
+                {error, _ReasonX} ->                         
+                    case string:equal(HAMode2, "all") of
+                        true -> atom_to_list(all);
+                        false ->  atom_to_list(none)
+                    end;
+                {Int, _Rest} -> 
+                    integer_to_list(Int);
+                _ -> atom_to_list(none)
+            end
+    end,    
+    
     VhostStr = binary_to_list(Vhost),
     Queue_Or_ExchangeStr =  binary_to_list(Queue_Or_Exchange),
     Queue_Or_Exchange_NameStr =  binary_to_list(Queue_Or_Exchange_Name),
@@ -279,7 +303,15 @@ post_subscription(ReqData) ->
         AuthVal -> [{"Authorization", AuthVal}]
     end,
     Type = "application/x-www-form-urlencoded",
-    Body = "hub.mode=subscribe&hub.callback=" ++ CallbackURIStrEncoded ++ "&hub.topic=" ++ TopicStr ++ "&hub.verify=sync&hub.lease_seconds=" ++ Lease_SecondsStr ++ "&hub.maxtps=" ++ MaxTpsStr,
+    Body = case HAModeStr of
+        no_ha_mode ->
+            "hub.mode=subscribe&hub.callback=" ++ CallbackURIStrEncoded ++ "&hub.topic=" ++ TopicStr ++ 
+                "&hub.verify=sync&hub.lease_seconds=" ++ Lease_SecondsStr ++ "&hub.maxtps=" ++ MaxTpsStr;                       
+        HAStr -> 
+            "hub.mode=subscribe&hub.callback=" ++ CallbackURIStrEncoded ++ "&hub.topic=" ++ TopicStr ++ 
+                "&hub.verify=sync&hub.lease_seconds=" ++ Lease_SecondsStr ++ "&hub.maxtps=" ++ MaxTpsStr ++ 
+                "&hub.ha_mode=" ++ HAStr
+    end,
 
     %% make http request
     HTTPOptions = [],

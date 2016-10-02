@@ -170,7 +170,11 @@
         <tr>
           <th><label>Max TPS:</label></th>
           <td><input type="number" name="maxtps" min="0" step="1" value="0"/><span class="mand">*</span> tps</td>		  
-        </tr>	
+        </tr>
+        <tr>
+          <th><label>HA Mode:</label><span class="help" id="ha_mode"></th>
+          <td><input type="text" name="hamode"/><span class="mand">*</span></td>		  
+        </tr>		
       </table>
       <input type="submit" value="Add Subscription"/>
     </form>
@@ -205,8 +209,8 @@
                 <td><%= environment.environment.wait_for_consumer_restart_milliseconds %></td>                
             </tr>
             <tr>
-                <td><b>ha_consumers</b><span class="help" id="ha_consumers"></td>
-                <td><%= environment.environment.ha_consumers %></td>                
+                <td><b>ha_mode</b><span class="help" id="ha_mode"></td>
+                <td><%= environment.environment.ha_mode %></td>                
             </tr>
             <tr>
                 <td><b>log_http_post_request</b><span class="help" id="log_http_post_request"></td>
