@@ -87,6 +87,10 @@ HELP['set_correlation_id'] = '<p><strong>RabbitHub environment variable-</strong
 
 HELP['set_message_id'] = '<p><strong>RabbitHub environment variable-</strong> <mark><strong>set_message_id</strong></mark>:  (&#39;header&#39;) <dl><dt>Http header Name </dt><dd>The name of a http header to use to pass a RabbitHub generated message id to subscribers</dd> <dt>Note: </dt><dd>E.g. &#39;x-message-id&#39;</dd></dl></p>';
 
+HELP['log_published_messages'] = '<p><strong>RabbitHub environment variable-</strong> <mark><strong>log_published_messages</strong></mark>:  (true, false) <dl><dt>true: </dt><dd>Log all messages published via RabbitHub</dd> <dt>false: (default)</dt> <dd>Do not log all published messages</dd><dt>Note: </dt><dd>log_message_body only works when this is set to true</dd></dl></p>';
+
+HELP['log_message_body'] = '<p><strong>RabbitHub environment variable-</strong> <mark><strong>log_message_body</strong></mark>:  (true, false) <dl><dt>true: </dt><dd>Log Message body when message is published</dd> <dt>false: (default)</dt> <dd>Do not log message body when messages are published</dd><dt>Note: </dt><dd>log_message_body only works when log_published_messages is set to true</dd></dl></p>';
+
 HELP['default_username'] = '<p><strong>RabbitHub environment variable-</strong> <mark><strong>default_username</strong></mark>:  (rabbitmq username) <dl><dt>This is the username that Rabbithb will use if one is not explicitly sent to the RabbitHub apis.</dt></dl></p>';
 
 HELP['listener'] = '<p><strong>RabbitHub environment variable-</strong> <mark><strong>listener port</strong></mark>:  (port) <dl><dt>This is the port on which the RabbitHub apis will listen.</dt></dl></p>';

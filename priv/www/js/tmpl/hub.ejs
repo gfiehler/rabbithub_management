@@ -239,8 +239,15 @@
             <tr>
                 <td><b>set_message_id</b><span class="help" id="set_message_id"></td>
                 <td><%= environment.environment.set_message_id %></td>                
-            </tr>            
-            
+            </tr> 
+            <tr>
+                <td><b>log_published_messages</b><span class="help" id="log_published_messages"></td>
+                <td><%= environment.environment.log_published_messages %></td>                
+            </tr>
+            <tr>
+                <td><b>log_message_body</b><span class="help" id="log_message_body"></td>
+                <td><%= environment.environment.log_message_body %></td>                
+            </tr>                        
             <tr>
                 <td><b>default_username</b><span class="help" id="default_username"></td>
                 <td><%= environment.environment.default_username %></td>                
@@ -255,7 +262,7 @@
           <% } %>
           <% if ( typeof environment.environment.http_client_options !== 'undefined' ) { %>                                             
             <tr>
-                <td><b>http_client_options: max_keep_alive_length</b><span class="help" id="http_client_options"></td>
+                <td><b>http_client_options</b><span class="help" id="http_client_options"></td>
                 <td><pre><%= JSON.stringify(environment.environment.http_client_options, null, 2) %></pre></td>                
             </tr>
           <% } %> 
