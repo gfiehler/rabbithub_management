@@ -1,8 +1,8 @@
 # Features
 RabbitHub Management is a Rabbitmq Management Plugin for the RabbitHub Plugin
 RabbitHub is a Webhooks Pub/Sub Plugin for Rabbitmq
-Tested with Rabbitmq 3.6.1 and 3.6.2
-(only works with https://github.com/gfiehler/rabbithub/tree/3.6.2-Feature-Updates)
+Tested with Rabbitmq 3.6.1 3.6.2, 3.6.3 and 3.6.6
+(only works with https://github.com/gfiehler/rabbithub/tree/3.6.2-Feature-Updates and newer.)
 
 Adds Admin page for managing RabbitHub Functionality.
 
