@@ -13,7 +13,7 @@ Including<br>
   * HTTP Post Error Summary
   * Environment Variable Settings
   * Download Subscribers in JSON file
-  * Upload Subscribers from a JSON file
+  * Upload Subscribers from a JSON file 
 2. Actions
   * Create a new Subscription
   * Delete a Subscription
