@@ -50,6 +50,8 @@ This page will show a list of subscribers, consumers, http post errors summary, 
 
 The name column for each subscriber is a non-unqiue name that is a combination of the `resource_topic` and is a link to the details page for that subscriber.  A truly unique name would also have to inlcude the callback URL, however that was too long to use in the UI.  The name is a link to the details page for that Subscriber.
 
+For details on what each field means for Adding a Subscriber, please see the RabbitHub readme file.
+
 Environment Variables displayed in the configuration section can be found in the rabbitmq.config file.  This file is commonly found in /etc/rabbitmq directory in Unix installations.
 
 Import and Export of subscribers can be done via the UI by downloading or uploading JSON files in the following format.  See RabbitHub batch processing for more details.
