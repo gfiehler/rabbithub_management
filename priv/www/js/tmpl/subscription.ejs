@@ -39,7 +39,7 @@
       </tr> 
       <tr>
         <th>Max TPS</th>
-        <td><%= hub.subscriptions[0].maxtps %></td>
+        <td><%= hub.subscriptions[0].max_tps %></td>
       </tr>
       <tr>
         <th>Status</th>
@@ -49,19 +49,62 @@
           <td colspan="5"><%= fmt_state('red',  hub.subscriptions[0].status) %></td>
        <% } %>
       </tr>
-    <% if (hub.subscriptions[0].resource_type == 'exchange') { %>
+    <% if (hub.subscriptions[0].resource_type == 'exchange' && hub.subscriptions[0].status == 'active') { %>
       <tr>
         <th>Pseudo Queue</th>
-        <td><%= hub.subscriptions[0].pseudo_queue %></td>
+        <td><%= fmt_pseudo_queue(hub.subscriptions[0].pseudo_queue) %></td>
       </tr>      
     <% } %>
+    <% if (hub.subscriptions[0].outbound_auth != 'undefined') { %>
+      <tr>
+        <th>Outbound Authentication Type</th>
+        <td><%= hub.subscriptions[0].outbound_auth.auth_type %></td>
+      </tr>
+      <tr>
+        <th>Outbound Authentication Configuration</th>
+        <td><%= hub.subscriptions[0].outbound_auth.auth_config %></td>
+      </tr>      
+    <% } %>
+    <% if (hub.subscriptions[0].contact != 'undefined') { %>
+      <tr>
+        <th>Subscriber Contact Information</th>
+      </tr>
+      <tr>
+        <th>Application Name</th>
+        <td><%= hub.subscriptions[0].contact.app_name %></td>
+      </tr>      
+      <tr>
+        <th>Contact Name</th>
+    <% if (hub.subscriptions[0].contact.contact_name != 'undefined') { %>          
+        <td><%= hub.subscriptions[0].contact.contact_name %></td>
+    <% } %>
+      </tr>    
+      <tr>
+        <th>Phone</th>
+    <% if (hub.subscriptions[0].contact.phone != 'undefined') { %>                  
+        <td><%= hub.subscriptions[0].contact.phone %></td>
+    <% } %>
+      </tr>
+      <tr>
+        <th>Email</th>
+    <% if (hub.subscriptions[0].contact.email != 'undefined') { %>                  
+        <td><%= hub.subscriptions[0].contact.email %></td>
+    <% } %>
+      </tr>
+      <tr>
+        <th>Description</th>
+    <% if (hub.subscriptions[0].contact.description != 'undefined') { %>                  
+        <td><%= hub.subscriptions[0].contact.description %></td>
+    <% } %>
+      </tr>      
+    <% } %>   
     </table>
   </div>
 </div>
 <div class="section-hidden">
   <h2>Manage Subscription</h2>
   <div class="hider">       
-    <%if (hub.subscriptions[0].status == "inactive") { %>  
+    <% if (hub.subscriptions[0].status == "inactive") { %>  
     <form action="#/hub/subscriptions" method="put">
       <input type="hidden" name="vhost" value="<%= fmt_string(hub.subscriptions[0].vhost) %>"/>
       <input type="hidden" name="type" value="<%= fmt_string(hub.subscriptions[0].resource_type) %>"/>      
@@ -71,8 +114,26 @@
       <input type="hidden" name="lease" value="<%= fmt_string(hub.subscriptions[0].lease_expiry_time_microsec) %>"/>
       <input type="hidden" name="lease_sec" value="<%= fmt_string(hub.subscriptions[0].lease_seconds) %>"/>      
       <input type="hidden" name="ha_mode" value="<%= fmt_string(hub.subscriptions[0].ha_mode) %>"/>
-      <input type="hidden" name="maxtps" value="<%= fmt_string(hub.subscriptions[0].maxtps) %>"/>
+      <input type="hidden" name="max_tps" value="<%= fmt_string(hub.subscriptions[0].max_tps) %>"/>
       <input type="hidden" name="hub_mode" value="<%= fmt_string('subscribe') %>"/>
+      <% if (hub.subscriptions[0].outbound_auth != 'undefined') { %>
+        <input type="hidden" name="hub_basic_auth" value="<%= fmt_string(hub.subscriptions[0].outbound_auth.auth_config) %>"/>      
+      <% } %>  
+      <% if (hub.subscriptions[0].contact != 'undefined') { %>
+        <input type="hidden" name="app_name" value="<%= fmt_string(hub.subscriptions[0].contact.app_name) %>"/>  
+       <% if (hub.subscriptions[0].contact.contact_name != 'undefined') { %>          
+        <input type="hidden" name="contact_name" value="<%= fmt_string(hub.subscriptions[0].contact.contact_name) %>"/>      
+       <% } %> 
+       <% if (hub.subscriptions[0].contact.phone != 'undefined') { %>          
+        <input type="hidden" name="phone" value="<%= fmt_string(hub.subscriptions[0].contact.phone) %>"/>      
+       <% } %> 
+       <% if (hub.subscriptions[0].contact.email != 'undefined') { %>          
+        <input type="hidden" name="email" value="<%= fmt_string(hub.subscriptions[0].contact.email) %>"/>      
+       <% } %> 
+       <% if (hub.subscriptions[0].contact.description != 'undefined') { %>          
+        <input type="hidden" name="description" value="<%= fmt_string(hub.subscriptions[0].contact.description) %>"/>      
+       <% } %> 
+      <% } %> 
       <input type="submit" value="Activate/Resubscribe"/>
     </form>
    <% } %> 
@@ -106,6 +167,18 @@
     </form>
    
   </div>
+</div>
+
+<div class="section-hidden administrator-only">
+<h2>Export definition</h2>
+<div class="hider">
+  </br>
+  </br>
+  <h3>Export</h3>
+  <a href=<%= fmt_subscription_export_link(hub.subscriptions[0].vhost, hub.subscriptions[0].resource_type, hub.subscriptions[0].resource_name, hub.subscriptions[0].topic, hub.subscriptions[0].callback) %> class="button" download> <span style="font-size: 16px;"><ul><b>Download Subscription To File</b></ul></span></a>
+  </br>
+  </br> 
+</div>
 </div>
 
 <div class="section-hidden">    

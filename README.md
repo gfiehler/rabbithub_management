@@ -101,7 +101,7 @@ On this page you see a single subscriber and its information along with three po
 <img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Post%20Errors.PNG" alt="RabbitHub Managment Main Screen:  Subscriber Post Errors"/>
 
 ### RabbitHub Management Main Screen with Add Subscriber Form
-<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Add%20Subscriber.PNG" alt="RabbitHub Managment Main Screen:  Add Subscriber"/>
+<img src="https://github.com/gfiehler/rabbithub_management/blob/3.6.3-Updates/doc/RabbitHub-Main%20Screen%20Add%20Subscriber1.PNG" alt="RabbitHub Managment Main Screen:  Add Subscriber"/>
 
 ### RabbitHub Management Main Screen with Configuration
 <img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Configuration.PNG" alt="RabbitHub Managment Main Screen:  Configuration"/>
