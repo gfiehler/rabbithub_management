@@ -18,7 +18,7 @@ Including
 2. Actions
   * Create a new Subscription
   * Delete a Subscription
-  * Re-Subscribe a Subscription 
+  * Re-Subscribe (Activate) a Subscription 
   
 # Building
 
@@ -48,9 +48,12 @@ For a Rabbitmq_management user to perform export/import the user must have both 
 ## Overview Page
 This page will show a list of subscribers, consumers, http post errors summary, form to add a new subscriber, environment variable settings, and ability to import/export subscribers in batch.
 
-The name column for each subscriber is a non-unqiue name that is a combination of the `resource_topic` to the details page.  A truly unique name would also have to inlcude the callback URL, however that was too long to use in the UI.  The name is a link to the details page for that Subscriber.
+The name column for each subscriber is a non-unqiue name that is a combination of the `resource_topic` and is a link to the details page for that subscriber.  A truly unique name would also have to inlcude the callback URL, however that was too long to use in the UI.  The name is a link to the details page for that Subscriber.
 
-Import and Export of subscribers can be done via the UI by downloading or uploading JSON files in the following format.  
+Environment Variables displayed in the configuration section can be found in the rabbitmq.config file.  This file is commonly found in /etc/rabbitmq directory in Unix installations.
+
+Import and Export of subscribers can be done via the UI by downloading or uploading JSON files in the following format.  See RabbitHub batch processing for more details.
+
 Note:  This can be used as backup or to migrate subscribers between environments.
 
 
