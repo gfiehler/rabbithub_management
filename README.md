@@ -8,16 +8,16 @@ Adds Admin page for managing RabbitHub Functionality.
 
 Including
 1. Viewing tables of 
-  ..*Subscriptions
-  ..*Consumers
-  ..*HTTP Post Error Summary
-  ..*Environment Variable Settings
-  ..*Download Subscribers in JSON file
-  ..*Upload Subscribers from a JSON file
+  * Subscriptions
+  * Consumers
+  * HTTP Post Error Summary
+  * Environment Variable Settings
+  * Download Subscribers in JSON file
+  * Upload Subscribers from a JSON file 
 2. Actions
-  ..*Create a new Subscription
-  ..*Delete a Subscription
-  ..*Re-Subscribe a Subscription
+  * Create a new Subscription
+  * Delete a Subscription
+  * Re-Subscribe a Subscription 
 
 # Building
 
