@@ -6,7 +6,8 @@ Tested with Rabbitmq 3.6.1 3.6.2, 3.6.3 and 3.6.6
 
 Adds Admin page for managing RabbitHub Functionality.
 
-Including<br>
+Including
+
 1. Viewing tables of 
   * Subscriptions
   * Consumers
@@ -18,7 +19,7 @@ Including<br>
   * Create a new Subscription
   * Delete a Subscription
   * Re-Subscribe a Subscription 
-
+  
 # Building
 
 You can build and install it like any other plugin (see
