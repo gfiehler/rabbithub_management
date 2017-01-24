@@ -6,14 +6,14 @@ Tested with Rabbitmq 3.6.1 3.6.2, 3.6.3 and 3.6.6
 
 Adds Admin page for managing RabbitHub Functionality.
 
-Including
+Including<br>
 1. Viewing tables of 
   * Subscriptions
   * Consumers
   * HTTP Post Error Summary
   * Environment Variable Settings
   * Download Subscribers in JSON file
-  * Upload Subscribers from a JSON file 
+  * Upload Subscribers from a JSON file
 2. Actions
   * Create a new Subscription
   * Delete a Subscription
