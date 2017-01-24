@@ -25,7 +25,7 @@
 %%--------------------------------------------------------------------
 %-record(rabbithub_subscription, {resource, topic, callback}).
 
-%-record(consumer, {subscription, node}).
+%-record(rabbithub_consumer, {subscription, node}).
 
 %-record(rabbithub_subscription_pid, {consumer, pid, expiry_timer}).
 
@@ -66,13 +66,13 @@ get_hub_consumers(ReqData) ->
 	    
     Data = {struct,
             [{consumers, [
-            [{vhost, element(2, ((Consumer#rabbithub_subscription_pid.consumer)#consumer.subscription)#rabbithub_subscription.resource)},
-                {resource_type, element(3, ((Consumer#rabbithub_subscription_pid.consumer)#consumer.subscription)#rabbithub_subscription.resource)},
-                {resource_name, element(4, ((Consumer#rabbithub_subscription_pid.consumer)#consumer.subscription)#rabbithub_subscription.resource)},
-                {topic, list_to_binary(((Consumer#rabbithub_subscription_pid.consumer)#consumer.subscription)#rabbithub_subscription.topic)},
-                {callback, list_to_binary(((Consumer#rabbithub_subscription_pid.consumer)#consumer.subscription)#rabbithub_subscription.callback)},
+            [{vhost, element(2, ((Consumer#rabbithub_subscription_pid.consumer)#rabbithub_consumer.subscription)#rabbithub_subscription.resource)},
+                {resource_type, element(3, ((Consumer#rabbithub_subscription_pid.consumer)#rabbithub_consumer.subscription)#rabbithub_subscription.resource)},
+                {resource_name, element(4, ((Consumer#rabbithub_subscription_pid.consumer)#rabbithub_consumer.subscription)#rabbithub_subscription.resource)},
+                {topic, list_to_binary(((Consumer#rabbithub_subscription_pid.consumer)#rabbithub_consumer.subscription)#rabbithub_subscription.topic)},
+                {callback, list_to_binary(((Consumer#rabbithub_subscription_pid.consumer)#rabbithub_consumer.subscription)#rabbithub_subscription.callback)},
                 {pid, list_to_binary(pid_to_list(Consumer#rabbithub_subscription_pid.pid))},
-                {node, (Consumer#rabbithub_subscription_pid.consumer)#consumer.node},
+                {node, (Consumer#rabbithub_subscription_pid.consumer)#rabbithub_consumer.node},
                 {status, get_pid_status(Consumer#rabbithub_subscription_pid.pid)}]
                || Consumer <- Consumers]}]},
 	                             
@@ -169,7 +169,7 @@ get_hub_consumers(ReqData) ->
     FinalResp.
     
 get_hub_consumers_for_sub(_ReqData, Callback, Topic, Vhost, ResourceName, ResourceType) ->
-%% -record(consumer, {subscription, node}).
+%% -record(rabbithub_consumer, {subscription, node}).
 %% -record(rabbithub_subscription, {resource, topic, callback}).
 %% -record(rabbithub_subscription_pid, {consumer, pid, expiry_timer}).
 
@@ -183,7 +183,7 @@ get_hub_consumers_for_sub(_ReqData, Callback, Topic, Vhost, ResourceName, Resour
     Sub = #rabbithub_subscription{resource = Resource,
                                     topic = Topic,
                                     callback = Callback},
-    Con = #consumer{subscription = Sub, node = '_'},
+    Con = #rabbithub_consumer{subscription = Sub, node = '_'},
     
     WildPattern = mnesia:table_info(rabbithub_subscription_pid, wild_pattern),
     Pattern = WildPattern#rabbithub_subscription_pid{consumer = Con},
@@ -192,13 +192,13 @@ get_hub_consumers_for_sub(_ReqData, Callback, Topic, Vhost, ResourceName, Resour
     
     Data = {struct,
             [{consumers, [
-            [{vhost, element(2, ((Consumer#rabbithub_subscription_pid.consumer)#consumer.subscription)#rabbithub_subscription.resource)},
-                {resource_type, element(3, ((Consumer#rabbithub_subscription_pid.consumer)#consumer.subscription)#rabbithub_subscription.resource)},
-                {resource_name, element(4, ((Consumer#rabbithub_subscription_pid.consumer)#consumer.subscription)#rabbithub_subscription.resource)},
-                {topic, list_to_binary(((Consumer#rabbithub_subscription_pid.consumer)#consumer.subscription)#rabbithub_subscription.topic)},
-                {callback, list_to_binary(((Consumer#rabbithub_subscription_pid.consumer)#consumer.subscription)#rabbithub_subscription.callback)},
+            [{vhost, element(2, ((Consumer#rabbithub_subscription_pid.consumer)#rabbithub_consumer.subscription)#rabbithub_subscription.resource)},
+                {resource_type, element(3, ((Consumer#rabbithub_subscription_pid.consumer)#rabbithub_consumer.subscription)#rabbithub_subscription.resource)},
+                {resource_name, element(4, ((Consumer#rabbithub_subscription_pid.consumer)#rabbithub_consumer.subscription)#rabbithub_subscription.resource)},
+                {topic, list_to_binary(((Consumer#rabbithub_subscription_pid.consumer)#rabbithub_consumer.subscription)#rabbithub_subscription.topic)},
+                {callback, list_to_binary(((Consumer#rabbithub_subscription_pid.consumer)#rabbithub_consumer.subscription)#rabbithub_subscription.callback)},
                 {pid, list_to_binary(pid_to_list(Consumer#rabbithub_subscription_pid.pid))},
-                {node, (Consumer#rabbithub_subscription_pid.consumer)#consumer.node},
+                {node, (Consumer#rabbithub_subscription_pid.consumer)#rabbithub_consumer.node},
                 {status, get_pid_status(Consumer#rabbithub_subscription_pid.pid)}]
                || Consumer <- Results]}]},
     Data.        

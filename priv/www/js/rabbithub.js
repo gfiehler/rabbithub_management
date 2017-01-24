@@ -71,7 +71,7 @@ HELP['unsubscribe_on_http_post_error_timeout_milliseconds'] = '<p><strong>Rabbit
 
 HELP['wait_for_consumer_restart_milliseconds'] = '<p><strong>RabbitHub environment variable-</strong> <mark><strong>wait_for_consumer_restart_milliseconds</strong></mark>:  (milliseconds) <dl><dt>If a consumer fails, the configured interval will be waited prior to attemtping a restart.  This is useful when a master queue fails over to a new host.</dt></dl></p>';
 
-HELP['ha_mode'] = '<p><strong>RabbitHub environment variable-</strong> <mark><strong>ha_mode</strong></mark>:  (all, Int) <dl><dt>none:</dt><dd>default behaviour is when a subscription is created to start a consumer on the node to which the subscription request was sent</dd> <dt>all:</dt> <dd>when a subscription is created start a consumer on all nodes in the cluster</dd><dt>Int</dt><dd>When a subscription is created start a consumer on (Int) nodes in the cluster.  The nodes are picked at random.  If (Int) is greater than the number of nodes it will behave like (all)</dd></dl></p>';
+HELP['ha_mode'] = '<p><strong>RabbitHub environment variable-</strong> <mark><strong>ha_mode</strong></mark>:  (all, Int) <dl><dt>none:</dt><dd>default behaviour is when a subscription is created to start a consumer on the node to which the subscription request was sent</dd> <dt>all:</dt> <dd>when a subscription is created start a consumer on all nodes in the cluster</dd><dt>Int</dt><dd>When a subscription is created start a consumer on (Int) nodes in the cluster.  The nodes are picked at random.  If (Int) is greater than the number of nodes it will behave like (all)</dd><dt>Note: </dt><dd>See Configuration Section to find default value used when not provided in the creation of a Subscriber</dd></dl></p>';
 
 HELP['log_http_post_request'] = '<p><strong>RabbitHub environment variable-</strong> <mark><strong>log_http_post_request</strong></mark>:  (true, false) <dl><dt>true:</dt><dd>Log messags being Posted to RabbitHUb subscribers</dd> <dt>false: (default)</dt> <dd>Do not log messags being Posted to RabbitHUb subscribers</dd></dl></p>';
 
@@ -101,7 +101,15 @@ HELP['http_request_options'] = '<p><strong>RabbitHub environment variable-</stro
 
 HELP['log_maxtps_delay'] = '<p><strong>RabbitHub environment variable-</strong> <mark><strong>log_maxtps_delay</strong></mark>:  (true, false) <dl><dt>true: </dt><dd>If subscriber has Max TPS set (non zero) do not log the delay time for each POST</dd> <dt>false:  (default) </dt> <dd>If subscriber has Max TPS set (non zero) log the delay time for each POST</dd><dt>Note: </dt><dd>Max TPS can be set when creating a subscriber with the hub.maxttps parameter, this value is used to calculate how long to delay between POSTs to a subscriber.  See documentation for details.</dd></dl></p>';
 
+HELP['maxtps'] = '<p><strong>Subscriber Option-</strong> <mark><strong>Max TPS</strong></mark>:  (seconds) <dl><dt>Max TPS </dt><dd>Simple throttling mechanism to limit the Maximum Transactions Per Second that can be sent to a subscriber</dd> <dt>0:  (default) </dt> <dd>If subscriber has Max TPS set to zero no throttling will occur.  See documentation for details.</dd></dl></p>';
+
 HELP['use_internal_queue_for_pseudo_queue'] = '<p><strong>RabbitHub environment variable-</strong> <mark><strong>use_internal_queue_for_pseudo_queue</strong></mark>:  (true, false) <dl><dt>true:  (default) </dt><dd>Backwards compatibility setting, by default RabbitHub uses an internally declared queue when a subscription is made directly to an exchange.  In this mode some new features in error management are not avaiable and consumers are not assigned to the queue.</dd> <dt>false:</dt> <dd>Generate a queue and assign to a standard consumer, all RabbitHUb features are available. </dd><dt>Note: </dt><dd>See documentation for details.</dd></dl></p>';
+
+HELP['auth_config'] = '<p><strong>RabbitHub Subscriber Authentication - </strong> <mark><strong>auth_config</strong></mark>:  (config) <dl><dt>Basic Auth:</dt><dd>For basic authentication this value should be the base64 string of user:password.  E.g dXNlcjpwYXNzd29yZA=</dd></dl></p>';
+
+HELP['log_subscription_expiration'] = '<p><strong>RabbitHub  environment variable-</strong> <mark><strong>log_subscription_expiration</strong></mark>:  (int) <dl><dt>Days:</dt><dd>When a message is sent to a subscriber, log the expiration date of the subscriber if the number of days before expiration is less than this value</dd></dl></p>';
+
+HELP['default_lease_seconds'] = '<p><strong>RabbitHub  environment variable-</strong> <mark><strong>default_lease_seconds</strong></mark>:  (seconds) <dl><dt>Default Lease in Seconds:</dt><dd>This is the default number of seconds a lease will be given when hub.lease_seconds is not given when a suscriber is created.  If this variable is not present the default value is 30 days.</dd><dt>Note: </dt><dd>See Configuration Section to find default value used when not provided in the creation of a Subscriber</dd></dl></p>';
 
 
 
@@ -173,7 +181,7 @@ function resubscribe(sammy) {
     var lease_sec = sammy.params['lease_sec'];
     var ha_mode = sammy.params['ha_mode'];
     var hub_mode = sammy.params['hub_mode'];
-    var maxtps = sammy.params['maxtps'];
+    var maxtps = sammy.params['max_tps'];
     var path = '/hub/subscriptions/' + esc(vhost) + '/' + esc(type) + '/' + esc(resource)+ '/' + esc(topic)+ '/' + esc(callback);
 	var req = xmlHttpRequest();
 	var type = 'PUT';
@@ -216,8 +224,27 @@ function link_subscriptions(name, vhost, resource_type, resource_name, topic, ca
 
 function fmt_micro_to_date(micro) {
     var milli = micro / 1000;
-    var date = new Date(milli).toUTCString();
-
-    return date;
+    var date = new Date(milli);   
+    var dayMilli = 86400000;
+    var dayMilli30 = dayMilli*30;
+    var today = new Date();
+    var todayPlus30 = today.getTime() + dayMilli30;
+    if (today.getTime() >= milli) {
+        return fmt_state('red', date.toUTCString());
+    } else if (milli <= todayPlus30) {
+        return fmt_state('yellow', date.toUTCString());    
+    } else {
+        return fmt_state('green', date.toUTCString()); 
+    }   
 }
 
+function fmt_subscription_export_link(vhost, resource_type, resource_name, topic, callback) {
+    var link = '/api/hub/subscriptions/' + esc(vhost) + '/' + esc(resource_type) + '/' + esc(resource_name) + '/' + esc(topic) + '/' + esc(callback);
+    
+    return link;
+}
+
+function fmt_pseudo_queue(pq) {
+    var queueNameMatch = pq.match(/.*,queue, <<"(.*?)">>/);
+    return queueNameMatch[1];
+}

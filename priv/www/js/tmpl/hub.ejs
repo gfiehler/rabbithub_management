@@ -31,7 +31,7 @@
             <td><%= fmt_micro_to_date(subscription.lease_expiry_time_microsec) %></td>
             <td><%= subscription.lease_seconds %></td>
             <td><%= subscription.ha_mode %></td>
-            <td><%= subscription.maxtps %></td>            
+            <td><%= subscription.max_tps %></td>            
           <% if (subscription.status == 'active') { %>    
             <td colspan="5"><%= fmt_state('green', subscription.status) %></td>
           <% } else { %>
@@ -136,7 +136,7 @@
           </td>
         </tr>
 <% } else { %>
-        <tr><td><input type="hidden" name="vhost" value="<%= fmt_string(vhosts[0].name) %>"/></td></tr>
+        <tr><td><input type="hidden" name="hub.vhost" value="<%= fmt_string(vhosts[0].name) %>"/></td></tr>
 <% } %>       
         <tr>
           <th>
@@ -145,7 +145,7 @@
             </label>
           </th>
           <td>
-            <select name="queue-or-exchange">
+            <select name="hub.resource_type">
               <option value="q">Queue</option>
               <option value="x">Exchange</option>
             </select>
@@ -153,28 +153,68 @@
         </tr>
 		<tr>
           <th><label>Queue/Exchange Name:</label></th>
-          <td><input type="text" name="q-or-x-name"/><span class="mand">*</span></td>
+          <td><input type="text" name="hub.resource_name"/><span class="mand">*</span></td>
         </tr>
 		<tr>
           <th><label>Callback URI:</label></th>
-          <td><input type="text" name="callback-uri" value="http://"/><span class="mand">*</span></td>
+          <td><input type="text" name="hub.callback" value="http://"/><span class="mand">*</span></td>
         </tr>
 		<tr>
           <th><label>Topic:</label></th>
-          <td><input type="text" name="topic"/><span class="mand">*</span></td>
+          <td><input type="text" name="hub.topic"/><span class="mand">*</span></td>
         </tr>
 		<tr>
-          <th><label>Lease:</label></th>
-          <td><input type="text" name="lease-seconds"/><span class="mand">*</span> seconds</td>		  
+          <th><label>Lease:</label><span class="help" id="default_lease_seconds"></th>
+          <td><input type="text" name="hub.lease_seconds"/> seconds</td>		  
         </tr>	
         <tr>
-          <th><label>Max TPS:</label></th>
-          <td><input type="number" name="maxtps" min="0" step="1" value="0"/><span class="mand">*</span> tps</td>		  
+          <th><label>Max TPS:</label><span class="help" id="maxtps"></th>
+          <td><input type="number" name="hub.max_tps" min="0" step="1" value="0"/> tps</td>		  
         </tr>
         <tr>
           <th><label>HA Mode:</label><span class="help" id="ha_mode"></th>
-          <td><input type="text" name="hamode"/><span class="mand">*</span></td>		  
-        </tr>		
+          <td><input type="text" name="hub.ha_mode"/></td>		  
+        </tr>
+        <tr>
+          <th>
+            <label>
+              Authorization Type:
+            </label>
+          </th>
+          <td>
+            <select name="hub.auth_type">
+              <option value="none">None</option>
+              <option value="basic_auth">Basic Auth</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <th><label>Authorization Config:</label><span class="help" id="auth_config"></th>
+          <td><input type="text" name="hub.auth_config"/></td>		  
+        </tr>
+	    <tr>
+          <th><label>Subscriber Contact Information:</label></th>		           	            
+        </tr>			
+        <tr>
+           <th><label>Application Name:</label></th>
+           <td><input type="text" name="hub.contact.app_name"/></td>	
+        </tr>
+        <tr>
+           <th><label>Contact Name:</label></th>
+           <td><input type="text" name="hub.contact.contact_name"/></td>	
+        </tr>
+        <tr>
+           <th><label>Phone:</label></th>
+           <td><input type="text" name="hub.contact.phone"/></td>	
+        </tr>
+        <tr>
+           <th><label>Email:</label></th>
+           <td><input type="text" name="hub.contact.email"/></td>	
+        </tr>
+        <tr>
+           <th><label>Description:</label></th>
+           <td><input type="text" name="hub.contact.description"/></td>	
+        </tr>
       </table>
       <input type="submit" value="Add Subscription"/>
     </form>
@@ -279,6 +319,14 @@
             <tr>
                 <td><b>use_internal_queue_for_pseudo_queue</b><span class="help" id="use_internal_queue_for_pseudo_queue"></td>
                 <td><%= environment.environment.use_internal_queue_for_pseudo_queue %></td>                
+            </tr>
+            <tr>
+                <td><b>log_subscription_expiration</b><span class="help" id="log_subscription_expiration"></td>
+                <td><%= environment.environment.log_subscription_expiration %></td>                
+            </tr>
+            <tr>
+                <td><b>default_lease_seconds</b><span class="help" id="default_lease_seconds"></td>
+                <td><%= environment.environment.default_lease_seconds %></td>                
             </tr>
         </table>
     </div>

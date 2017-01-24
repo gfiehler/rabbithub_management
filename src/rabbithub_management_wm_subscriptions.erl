@@ -102,7 +102,6 @@ get_hub_leases(ReqData) ->
                                                 [],
                                                 rabbithub_lease)
                            end),
-
         Data = {struct,  [{subscriptions, [
               [{name, format_name(Lease)},
                {vhost, element(2,(Lease#rabbithub_lease.subscription)#rabbithub_subscription.resource)},
@@ -113,8 +112,11 @@ get_hub_leases(ReqData) ->
                {lease_expiry_time_microsec, Lease#rabbithub_lease.lease_expiry_time_microsec},
                {lease_seconds, Lease#rabbithub_lease.lease_seconds},
                {ha_mode, Lease#rabbithub_lease.ha_mode},
-               {maxtps, Lease#rabbithub_lease.max_tps},
-               {status, Lease#rabbithub_lease.status}]
+               {max_tps, Lease#rabbithub_lease.max_tps},
+               {status, Lease#rabbithub_lease.status},
+               {pseudo_queue, convert_amq_to_binary(Lease#rabbithub_lease.pseudo_queue)},
+       	       {outbound_auth, convert_outbound_auth_to_binary(Lease#rabbithub_lease.subscription)},
+       	       {contact, convert_contact_to_binary(Lease#rabbithub_lease.subscription)}]
 	    || Lease <- Leases]}]},
 
 %%sort
@@ -232,32 +234,81 @@ get_hub_leases(ReqData) ->
     end,  
     FinalResp.
 
-        %%<<AAA/binary, "_", BBB/binary>>,    
+%%<<AAA/binary, "_", BBB/binary>>,    
 format_name(Lease) ->
     RName = element(4,(Lease#rabbithub_lease.subscription)#rabbithub_subscription.resource),
     Topic = list_to_binary((Lease#rabbithub_lease.subscription)#rabbithub_subscription.topic),
     << RName/binary, "_", Topic/binary>>.
 
+convert_amq_to_binary(Amq) ->
+    Flat = lists:flatten(io_lib:format("~p", [[Amq]])),
+    AmqString = re:replace(re:replace(Flat, "\n", "", [global,{return,list}]), "\s{2,}", " ", [global,{return,list}]),
+    AmqBinary = list_to_binary(AmqString),
+    AmqBinary.
+
+
+convert_outbound_auth_to_binary(Sub) ->   
+    {atomic, Auth} = mnesia:transaction(fun () -> mnesia:read({rabbithub_outbound_auth, Sub}) end),
+    AuthTuple = case Auth of
+        undefined -> undefined;
+        [] -> 
+            undefined;
+        AuthVal   -> 
+            AuthTuple1 = lists:nth(1, AuthVal),
+            [{auth_type, AuthTuple1#rabbithub_outbound_auth.auth_type}, 
+                 {auth_config, list_to_binary((AuthTuple1#rabbithub_outbound_auth.auth_config)#rabbithub_outbound_auth_basicauth_config.authorization)}]
+    end,     
+    AuthTuple.
+
+convert_contact_to_binary(Sub) ->
+    {atomic, SubscriberContact} = mnesia:transaction(fun () -> mnesia:read({rabbithub_subscriber_contact_info, Sub}) end),
+    ContactTuple = case SubscriberContact of
+        undefined -> undefined;
+        [] -> undefined;
+        SC1   -> 
+            SC2 = lists:nth(1, SC1),             
+            ContactInfo = element(3, SC2), 
+            [{app_name, conditional_list_to_binary(ContactInfo#rabbithub_contact.app_name)}, 
+             {contact_name, conditional_list_to_binary(ContactInfo#rabbithub_contact.contact_name)},
+             {phone, conditional_list_to_binary(ContactInfo#rabbithub_contact.phone)},
+             {email, conditional_list_to_binary(ContactInfo#rabbithub_contact.email)},
+             {description, conditional_list_to_binary(ContactInfo#rabbithub_contact.description)}]
+    end,     
+    ContactTuple.  
+    
+conditional_list_to_binary(ListVal) ->
+    case ListVal of
+        [] -> undefined;
+        undefined -> undefined;
+        [undefined] -> undefined;
+        LV -> list_to_binary(LV)
+    end.
 
 post_subscription(ReqData) ->
     Host = wrq:get_req_header("Host",ReqData),    
     Server = lists:nth(1, string:tokens(Host, ":")),
     Listener =  application:get_env(rabbithub, listener),
     Port = element(2, lists:nth(1, element(2, Listener))),
-    PortStr = lists:flatten(io_lib:format("~p", [Port])),    
-    
-    Body1 = wrq:req_body(ReqData),     
+    PortStr = lists:flatten(io_lib:format("~p", [Port])),        
+    Body1 = wrq:req_body(ReqData),    
     [{Body2, _}] = mochiweb_util:parse_qs(Body1),
     {struct, Body3} = mochijson2:decode(Body2),
-    
     Vhost = proplists:get_value(<<"vhost">>, Body3),   
-    Queue_Or_Exchange =  proplists:get_value(<<"queue-or-exchange">>, Body3),
-    Queue_Or_Exchange_Name =  proplists:get_value(<<"q-or-x-name">>, Body3),
-    Callback_URI =  proplists:get_value(<<"callback-uri">>, Body3),
-    Topic =  proplists:get_value(<<"topic">>, Body3),
-    Lease_Seconds =  proplists:get_value(<<"lease-seconds">>, Body3),
-    MaxTps = binary_to_integer(proplists:get_value(<<"maxtps">>, Body3)),
-    HAMode = proplists:get_value(<<"hamode">>, Body3),
+    Queue_Or_Exchange =  proplists:get_value(<<"hub.resource_type">>, Body3),
+    Queue_Or_Exchange_Name =  proplists:get_value(<<"hub.resource_name">>, Body3),
+    Callback_URI =  proplists:get_value(<<"hub.callback">>, Body3),
+    Topic =  proplists:get_value(<<"hub.topic">>, Body3),
+    Lease_Seconds =  proplists:get_value(<<"hub.lease_seconds">>, Body3),
+    MaxTps = binary_to_integer(proplists:get_value(<<"hub.max_tps">>, Body3)),
+    HAMode = proplists:get_value(<<"hub.ha_mode">>, Body3),
+    AuthType = proplists:get_value(<<"hub.auth_type">>, Body3),
+    AuthConfig = proplists:get_value(<<"hub.auth_config">>, Body3),     
+    
+    AppName = proplists:get_value(<<"hub.contact.app_name">>, Body3),
+    ContactName = proplists:get_value(<<"hub.contact.contact_name">>, Body3),
+    Phone = proplists:get_value(<<"hub.contact.phone">>, Body3),
+    Email = proplists:get_value(<<"hub.contact.email">>, Body3),
+    Description = proplists:get_value(<<"hub.contact.description">>, Body3),
     
     HAMode1 = binary_to_list(HAMode),
     HAMode2 = case HAMode1 of
@@ -278,14 +329,17 @@ post_subscription(ReqData) ->
                     integer_to_list(Int);
                 _ -> atom_to_list(none)
             end
-    end,    
-    
-    VhostStr = binary_to_list(Vhost),
+    end,
+    VhostStr = case Vhost of
+        undefined -> "/";
+        VH -> binary_to_list(VH)
+    end,
     Queue_Or_ExchangeStr =  binary_to_list(Queue_Or_Exchange),
     Queue_Or_Exchange_NameStr =  binary_to_list(Queue_Or_Exchange_Name),
     CallbackURIStr =  binary_to_list(Callback_URI),
     CallbackURIStrEncoded = edoc_lib:escape_uri(CallbackURIStr),
     TopicStr =  binary_to_list(Topic),
+    
     Lease_SecondsStr =  binary_to_list(Lease_Seconds),
     
     MaxTpsStr = case is_integer(MaxTps) of
@@ -297,33 +351,63 @@ post_subscription(ReqData) ->
     URL = set_subscription_url(Server, PortStr, VhostStr, Queue_Or_ExchangeStr, Queue_Or_Exchange_NameStr),
 
     Authorization = wrq:get_req_header("Authorization",ReqData),
-    %% Header format[{"connection", "close"}] [{"Authorization","Basic Z3JlZ2c6Z3JlZ2c="}].
     Header = case Authorization of
         undefined -> [];
         AuthVal -> [{"Authorization", AuthVal}]
     end,
     Type = "application/x-www-form-urlencoded",
-    Body = case HAModeStr of
+    PostBody = case HAModeStr of
         no_ha_mode ->
             "hub.mode=subscribe&hub.callback=" ++ CallbackURIStrEncoded ++ "&hub.topic=" ++ TopicStr ++ 
-                "&hub.verify=sync&hub.lease_seconds=" ++ Lease_SecondsStr ++ "&hub.maxtps=" ++ MaxTpsStr;                       
+                "&hub.verify=sync&hub.lease_seconds=" ++ Lease_SecondsStr ++ "&hub.max_tps=" ++ MaxTpsStr;                       
         HAStr -> 
             "hub.mode=subscribe&hub.callback=" ++ CallbackURIStrEncoded ++ "&hub.topic=" ++ TopicStr ++ 
-                "&hub.verify=sync&hub.lease_seconds=" ++ Lease_SecondsStr ++ "&hub.maxtps=" ++ MaxTpsStr ++ 
+                "&hub.verify=sync&hub.lease_seconds=" ++ Lease_SecondsStr ++ "&hub.max_tps=" ++ MaxTpsStr ++ 
                 "&hub.ha_mode=" ++ HAStr
     end,
-
+    PostBody1 = case AuthType of
+        undefined -> PostBody;
+        [] -> PostBody;
+        <<"basic_auth">> -> PostBody ++ "&hub.basic_auth=" ++ binary_to_list(AuthConfig);
+        _Other -> PostBody
+    end,
+    PostBody2 = case AppName of
+        undefined -> PostBody1;
+        [] -> PostBody1;
+        AN -> PostBody1 ++ "&hub.app_name=" ++ binary_to_list(AN)
+    end,
+    PostBody3 = case ContactName of
+        undefined -> PostBody2;
+        [] -> PostBody2;
+        CN -> PostBody2 ++ "&hub.contact_name=" ++ binary_to_list(CN)
+    end,
+    PostBody4 = case Phone of
+        undefined -> PostBody3;
+        [] -> PostBody3;
+        Ph -> PostBody3 ++ "&hub.phone=" ++ binary_to_list(Ph)
+    end,
+    PostBody5 = case Email of
+        undefined -> PostBody4;
+        [] -> PostBody4;
+        Em -> PostBody4 ++ "&hub.email=" ++ binary_to_list(Em)
+    end,
+    PostBody6 = case Description of
+        undefined -> PostBody5;
+        [] -> PostBody5;
+        De -> PostBody5 ++ "&hub.description=" ++ binary_to_list(De)
+    end,
     %% make http request
     HTTPOptions = [],
     Options = [],
-    R = httpc:request(Method, {URL, Header, Type, Body}, HTTPOptions, Options),
+    R = httpc:request(Method, {URL, Header, Type, PostBody6}, HTTPOptions, Options),
     R.
 
 set_subscription_url( Server, PortStr, "/", QorX, Name ) ->
     URL =  "http://" ++ Server ++ ":" ++ PortStr ++ "/subscribe/"  ++ QorX ++ "/" ++ Name,
     URL;
 set_subscription_url( Server, PortStr, V, QorX, Name ) ->
-    URL = "http://" ++ Server ++ ":" ++ PortStr ++ "/" ++ V ++ "/subscribe/"  ++ QorX ++ "/" ++ Name,
+    EncodedVhost = edoc_lib:escape_uri(V),
+    URL = "http://" ++ Server ++ ":" ++ PortStr ++ "/" ++ EncodedVhost ++ "/subscribe/"  ++ QorX ++ "/" ++ Name,
     URL.
       
 %%responses

@@ -47,7 +47,17 @@ allowed_methods(ReqData, Context) ->
    
 
 to_json(ReqData, Context) ->
-    rabbit_mgmt_util:reply(get_hub_lease(ReqData), ReqData, Context).
+    Resp = get_hub_lease(ReqData),
+
+    case Resp of
+        {ok, {{"HTTP/1.1", ReturnCode, _State}, _Head, Body}} ->
+            GetResp = wrq:set_resp_header("Content-type", "application/json", wrq:set_resp_body(Body, ReqData)),                
+            {{halt, ReturnCode}, GetResp, Context};
+        {error, Reason} ->
+            {false, failure(Reason, ReqData), Context};
+        Other ->
+            {{halt, 400}, failure(Other, ReqData), Context}
+    end.        
 
 
 accept_content(ReqData, Context) ->
@@ -126,53 +136,48 @@ get_hubmode(ReqData) ->
 
       
 get_hub_lease(ReqData) ->
-    Vhost = rabbit_mgmt_util:id(vhost, ReqData),
-    ResourceType = rabbit_mgmt_util:id(type, ReqData),
-    ResourceTypeAtom = case ResourceType of
-                            <<"queue">> -> queue;
-                            <<"exchange">> -> exchange
-                        end,
-    ResourcName = rabbit_mgmt_util:id(resource, ReqData),    
+    Host = wrq:get_req_header("Host",ReqData),
+    Server = lists:nth(1, string:tokens(Host, ":")),
+    Listener =  application:get_env(rabbithub, listener),
+    Port = element(2, lists:nth(1, element(2, Listener))),
+    PortStr = lists:flatten(io_lib:format("~p", [Port])),    
+    Vhost = binary_to_list(rabbit_mgmt_util:id(vhost, ReqData)),
+    ResourceType = rabbit_mgmt_util:id(type, ReqData),         
+    Resource = binary_to_list(rabbit_mgmt_util:id(resource, ReqData)),
     Topic = binary_to_list(rabbit_mgmt_util:id(topic, ReqData)),
-    Callback = binary_to_list(rabbit_mgmt_util:id(callback, ReqData)),
-    Resource =  rabbithub:r(Vhost, ResourceTypeAtom, binary_to_list(ResourcName)),
-
-    Sub = #rabbithub_subscription{resource = Resource,
-                                    topic = Topic,
-                                    callback = Callback},             
-    {atomic, Data} =
-    mnesia:transaction(
-        fun () ->
-            case  mnesia:read(rabbithub_lease, Sub) of
-                [] ->                                  
-                    Data = {},
-                    Data;
-                [Lease] -> 
-                    Data = {struct,  [{subscriptions, 
-                        [[{vhost, element(2,(Lease#rabbithub_lease.subscription)#rabbithub_subscription.resource)},              	              
-                          {resource_type, element(3,(Lease#rabbithub_lease.subscription)#rabbithub_subscription.resource)},
-                          {resource_name, element(4,(Lease#rabbithub_lease.subscription)#rabbithub_subscription.resource)},
-                          {topic, list_to_binary((Lease#rabbithub_lease.subscription)#rabbithub_subscription.topic)},
-                          {callback, list_to_binary((Lease#rabbithub_lease.subscription)#rabbithub_subscription.callback)},
-                          {lease_expiry_time_microsec, Lease#rabbithub_lease.lease_expiry_time_microsec},
-                          {lease_seconds, Lease#rabbithub_lease.lease_seconds},
-                          {ha_mode, Lease#rabbithub_lease.ha_mode},
-                          {maxtps, Lease#rabbithub_lease.max_tps},
-                          {status, Lease#rabbithub_lease.status},
-                          {pseudo_queue, convert_amq_name_to_binary(Lease#rabbithub_lease.pseudo_queue)}]]}]},
-                    Data
-            end 
-    end),
-    Data.
+    Callback = binary_to_list(rabbit_mgmt_util:id(callback, ReqData)),    
+    CallbackEncoded = edoc_lib:escape_uri(Callback),
+    Authorization = wrq:get_req_header("Authorization",ReqData),
+    Header = case Authorization of
+        undefined -> [];
+        AuthVal -> [{"Authorization", AuthVal}]
+    end,
     
-convert_amq_name_to_binary(Amq) ->
-    case Amq of
-        undefined -> undefined;
-        Amq1 ->    
-            Resource = element(2, Amq1),
-            PQName = Resource#resource.name,
-            PQName
-    end.
+    TypeCode = case ResourceType of
+                <<"queue">> -> "q";
+                <<"exchange">> -> "x";
+                _ -> "q"
+               end,
+    
+    Method = get,
+    QueryParams = "hub.callback=" ++ CallbackEncoded ++ "&hub.topic=" ++ Topic,
+    URL = set_subscriptions_url(Server, PortStr, Vhost, TypeCode, Resource, QueryParams),
+    HTTPOptions = [],
+    Options = [],
+    R = httpc:request(Method, {URL, Header}, HTTPOptions, Options),  
+    R.
+
+    
+    
+set_subscriptions_url( Server, PortStr, "/", TypeCode, Resource, QueryParams ) ->
+    URL = "http://" ++ Server ++ ":" ++ PortStr ++ "/subscriptions/"  ++ TypeCode ++ "/" ++ Resource  ++ "?" ++ QueryParams,
+    URL;
+set_subscriptions_url( Server, PortStr, V, TypeCode, Resource, QueryParams ) ->
+    EncodedVhost = edoc_lib:escape_uri(V),
+    URL = "http://" ++ Server ++ ":" ++ PortStr ++ "/" ++ EncodedVhost ++ "/subscriptions/"  ++ TypeCode ++ "/" ++ Resource ++ "?" ++ QueryParams,
+    URL.
+
+    
             
         
 %%%%% delete
@@ -217,8 +222,10 @@ set_delete_url( Server, PortStr, "/", TypeCode, Resource, QueryParams ) ->
     URL = "http://" ++ Server ++ ":" ++ PortStr ++ "/subscribe/"  ++ TypeCode ++ "/" ++ Resource  ++ "?" ++ QueryParams,
     URL;
 set_delete_url( Server, PortStr, V, TypeCode, Resource, QueryParams ) ->
-    URL = "http://" ++ Server ++ ":" ++ PortStr ++ "/" ++ V ++ "/subscribe/"  ++ TypeCode ++ "/" ++ Resource ++ "?" ++ QueryParams,
+    EncodedVhost = edoc_lib:escape_uri(V),
+    URL = "http://" ++ Server ++ ":" ++ PortStr ++ "/" ++ EncodedVhost ++ "/subscribe/"  ++ TypeCode ++ "/" ++ Resource ++ "?" ++ QueryParams,
     URL.
+
 
 
 %%%%% end delete
@@ -263,7 +270,8 @@ set_unsubscribe_url( Server, PortStr, "/", TypeCode, Resource ) ->
     URL = "http://" ++ Server ++ ":" ++ PortStr ++ "/subscribe/"  ++ TypeCode ++ "/" ++ Resource,
     URL;
 set_unsubscribe_url( Server, PortStr, V, TypeCode, Resource ) ->
-    URL = "http://" ++ Server ++ ":" ++ PortStr ++ "/" ++ V ++ "/subscribe/"  ++ TypeCode ++ "/" ++ Resource,
+    EncodedVhost = edoc_lib:escape_uri(V),
+    URL = "http://" ++ Server ++ ":" ++ PortStr ++ "/" ++ EncodedVhost ++ "/subscribe/"  ++ TypeCode ++ "/" ++ Resource,
     URL.
     
 %% Subscribe
@@ -279,13 +287,13 @@ post_subscription_qs(ReqData) ->
     Topic = binary_to_list(rabbit_mgmt_util:id(topic, ReqData)),
     Callback = binary_to_list(rabbit_mgmt_util:id(callback, ReqData)),
     CallbackEncoded = edoc_lib:escape_uri(Callback),
-    
+    % add conditional contact info
     
     %%get body params  
     Body1 = wrq:req_body(ReqData),     
     [{Body2, _}] = mochiweb_util:parse_qs(Body1),
     {struct, Body3} = mochijson2:decode(Body2),
-    MaxTps = proplists:get_value(<<"maxtps">>, Body3),
+    MaxTps = proplists:get_value(<<"max_tps">>, Body3),
     MaxTps2 = case MaxTps of
         undefined -> 0;
         N when is_integer(N) -> N;
@@ -295,6 +303,13 @@ post_subscription_qs(ReqData) ->
         true -> lists:flatten(io_lib:format("~p", [MaxTps2]));
         false -> "0"
     end,
+    BasicAuth = proplists:get_value(<<"hub_basic_auth">>, Body3),
+    AppName = proplists:get_value(<<"app_name">>, Body3),
+    ContactName = proplists:get_value(<<"contact_name">>, Body3),
+    Phone = proplists:get_value(<<"phone">>, Body3),
+    Email = proplists:get_value(<<"email">>, Body3),
+    Description = proplists:get_value(<<"description">>, Body3),
+    
     Lease_Exp_Micro = binary_to_integer(proplists:get_value(<<"lease">>, Body3)),    
     LeaseSec = binary_to_integer(proplists:get_value(<<"lease_sec">>, Body3)),
     LS2 = case LeaseSec of
@@ -318,6 +333,7 @@ post_subscription_qs(ReqData) ->
                         <<"exchange">> -> "x";
                         _ -> "q"
                        end,
+           
                 
             %% set other params   
             Method = post,
@@ -331,17 +347,48 @@ post_subscription_qs(ReqData) ->
     
             Type = "application/x-www-form-urlencoded",
             LeaseStr = lists:flatten(io_lib:format("~p", [Lease])),            
-            Body = "hub.mode=subscribe&hub.callback=" ++ CallbackEncoded ++ "&hub.topic=" ++ Topic ++ "&hub.verify=sync&hub.lease_seconds=" ++ LeaseStr ++ "&hub.maxtps=" ++ MaxTpsStr,
-
+            Body = "hub.mode=subscribe&hub.callback=" ++ CallbackEncoded ++ "&hub.topic=" ++ Topic ++ "&hub.verify=sync&hub.lease_seconds=" ++ LeaseStr ++ "&hub.max_tps=" ++ MaxTpsStr,
+            BodyBA = case BasicAuth of
+                undefined -> Body;
+                BA -> Body ++ "&hub.basic_auth=" ++ binary_to_list(BA)
+            end,
+            BodyFinal = BodyBA ++ add_contact_params(AppName, ContactName, Phone, Email, Description),
+            
             %% make http request
             HTTPOptions = [],
             Options = [],
 
-            R = httpc:request(Method, {URL, Header, Type, Body}, HTTPOptions, Options),
+            R = httpc:request(Method, {URL, Header, Type, BodyFinal}, HTTPOptions, Options),
             R        
     end,
     Resp.
 
+
+add_contact_params(AppName, ContactName, Phone, Email, Description) ->
+    B1 = case AppName of 
+        undefined -> "";
+        AN -> 
+            B2 = "&hub.app_name=" ++ binary_to_list(AN),
+            B3 = case ContactName of
+                undefined -> B2;
+                CN -> B2 ++ "&hub.contact_name=" ++ binary_to_list(CN)
+            end,
+            B4 = case Phone of
+                undefined -> B3;
+                PH -> B3 ++ "&hub.phone=" ++ binary_to_list(PH)
+            end,
+            B5 = case Email of
+                undefined -> B4;
+                EM -> B4 ++ "&hub.email=" ++ binary_to_list(EM)
+            end,
+            B6 = case Description of
+                undefined -> B5;
+                DE -> B5 ++ "&hub.description=" ++ binary_to_list(DE)
+            end,
+            B6
+    end,
+    B1.
+            
 %% utils
 system_time() ->
     LocalTime = calendar:local_time(),
