@@ -95,7 +95,7 @@ On this page you see a single subscriber and its information along with three po
  
 ## Sample Screen Prints
 ### RabbitHub Management Main Screen with all features collapsed
-<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20All%20Hidden.PNG" alt="RabbitHub Managment Main Screen"/>
+<img src="doc/RabbitHub-Main%20Screen%20All%20Hidden.PNG" alt="RabbitHub Managment Main Screen"/>
 
 ### RabbitHub Management Main Screen with Subscribers
 <img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Subscriptions.PNG" alt="RabbitHub Managment Main Screen:  Subscribers"/>
