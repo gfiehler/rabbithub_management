@@ -98,31 +98,31 @@ On this page you see a single subscriber and its information along with three po
 <img src="doc/RabbitHub-Main%20Screen%20All%20Hidden.PNG" alt="RabbitHub Managment Main Screen"/>
 
 ### RabbitHub Management Main Screen with Subscribers
-<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Subscriptions.PNG" alt="RabbitHub Managment Main Screen:  Subscribers"/>
+<img src="doc/RabbitHub-Main%20Screen%20Subscriptions.PNG" alt="RabbitHub Managment Main Screen:  Subscribers"/>
 
 ### RabbitHub Management Main Screen with Consumers
-<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Consumers.PNG" alt="RabbitHub Managment Main Screen:  Consumers"/>
+<img src="doc/RabbitHub-Main%20Screen%20Consumers.PNG" alt="RabbitHub Managment Main Screen:  Consumers"/>
 
 ### RabbitHub Management Main Screen with Subscriber Post Errors
-<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Post%20Errors.PNG" alt="RabbitHub Managment Main Screen:  Subscriber Post Errors"/>
+<img src="doc/RabbitHub-Main%20Screen%20Post%20Errors.PNG" alt="RabbitHub Managment Main Screen:  Subscriber Post Errors"/>
 
 ### RabbitHub Management Main Screen with Add Subscriber Form
-<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Add%20Subscriber1.PNG" alt="RabbitHub Managment Main Screen:  Add Subscriber"/>
+<img src="doc/RabbitHub-Main%20Screen%20Add%20Subscriber1.PNG" alt="RabbitHub Managment Main Screen:  Add Subscriber"/>
 
 ### RabbitHub Management Main Screen with Configuration
-<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Configuration.PNG" alt="RabbitHub Managment Main Screen:  Configuration"/>
+<img src="doc/RabbitHub-Main%20Screen%20Configuration.PNG" alt="RabbitHub Managment Main Screen:  Configuration"/>
  
 ### RabbitHub Management Main Screen with Batch Import/Export
-<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Batch%20Import%20Export.PNG" alt="RabbitHub Managment Main Screen:  Batch Import/Export"/>
+<img src="doc/RabbitHub-Main%20Screen%20Batch%20Import%20Export.PNG" alt="RabbitHub Managment Main Screen:  Batch Import/Export"/>
 
 ### RabbitHub Management Main Screen with Batch Import Results
-<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub-Main%20Screen%20Batch%20Import%20Results.png" alt="RabbitHub Managment Main Screen:  Batch Import Results"/>
+<img src="doc/RabbitHub-Main%20Screen%20Batch%20Import%20Results.png" alt="RabbitHub Managment Main Screen:  Batch Import Results"/>
 
 ### RabbitHub Management Subscriber Detail Page - Active
-<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub%20Details%20Page%20Active.png" alt="RabbitHub Managment Main Screen:  Subscriber Detail Page - Active"/> 
+<img src="doc/RabbitHub%20Details%20Page%20Active.png" alt="RabbitHub Managment Main Screen:  Subscriber Detail Page - Active"/> 
 
 ### RabbitHub Management Subscriber Detail Page - Inactive
-<img src="https://github.com/gfiehler/rabbithub_management/blob/master/doc/RabbitHub%20Details%20Page%20Inactive.png" alt="RabbitHub Managment Main Screen:  Subscriber Detail Page - Inactive"/> 
+<img src="doc/RabbitHub%20Details%20Page%20Inactive.png" alt="RabbitHub Managment Main Screen:  Subscriber Detail Page - Inactive"/> 
 
 
 
