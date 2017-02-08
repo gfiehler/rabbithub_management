@@ -27,6 +27,9 @@ You can build and install it like any other plugin (see
 
 This is dependent on the rabbitmq_management plugin being activated on the rabbitmq instance.
 
+# Browser
+The download subscriptions for either all subscriptions or for individual subscriptions seems to only work with Firefox as Chrome does not ask for credentials.  All other functions seem to work fine in Chrome.
+
 # API
 You can drive the HTTP API yourself. It installs into the management plugin's API; you should understand that first. Once you do, the additional paths look like:
 
