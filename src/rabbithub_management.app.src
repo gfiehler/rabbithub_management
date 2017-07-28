@@ -1,6 +1,6 @@
 {application, rabbithub_management,
  [{description, "RabbitHub Management"},
-  {vsn, "3.6.3"},
+  {vsn, "3.6.3-61"},
   {modules, []},
   {registered, []},
   {applications, [kernel, stdlib, rabbit, rabbitmq_management]}]}.

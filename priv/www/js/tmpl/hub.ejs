@@ -7,14 +7,14 @@
           <tr>
             <th><%= fmt_sort('Name', 'name') %></th>
             <th><%= fmt_sort('Virtual host', 'vhost') %></th>
+            <th><%= fmt_sort('Status', 'status') %></th> 
             <th><%= fmt_sort('Resource', 'resource_name') %></th>
             <th><%= fmt_sort('Topic', 'topic') %></th>
             <th><%= fmt_sort('Callback URL', 'callback') %></th>
             <th><%= fmt_sort('Lease Expiration', 'lease_expiry_time_microsec') %></th>
             <th><%= fmt_sort('Lease Seconds', 'lease_seconds') %></th>
             <th><%= fmt_sort('HA Mode', 'ha_mode') %></th>
-            <th>Max TPS</th>
-            <th><%= fmt_sort('Status', 'status') %></th>            
+            <th>Max TPS</th>                      
           </tr>
          </thead>
          <tbody>
@@ -25,18 +25,18 @@
           <tr<%= alt_rows(i)%>>
             <td><%= link_subscriptions(subscription.name, subscription.vhost, subscription.resource_type, subscription.resource_name, subscription.topic, subscription.callback) %></td>
             <td><%= link_subscriptions(subscription.vhost, subscription.vhost, subscription.resource_type, subscription.resource_name, subscription.topic, subscription.callback) %></td>
+          <% if (subscription.status == 'active') { %>    
+            <td><%= fmt_state('green', subscription.status) %></td>
+          <% } else { %>
+            <td><%= fmt_state('red', subscription.status) %></td>
+          <% } %>
             <td><%= fmt_rabbithub_endpoint(subscription.resource_type, subscription.resource_name) %></td>
             <td><%= subscription.topic %></td>
             <td><%= subscription.callback %></td>
             <td><%= fmt_micro_to_date(subscription.lease_expiry_time_microsec) %></td>
             <td><%= subscription.lease_seconds %></td>
             <td><%= subscription.ha_mode %></td>
-            <td><%= subscription.max_tps %></td>            
-          <% if (subscription.status == 'active') { %>    
-            <td colspan="5"><%= fmt_state('green', subscription.status) %></td>
-          <% } else { %>
-            <td colspan="5"><%= fmt_state('red', subscription.status) %></td>
-          <% } %>
+            <td><%= subscription.max_tps %></td>                      
           </tr>
         <% } %>
          </tbody>
