@@ -145,6 +145,7 @@ get_hub_lease(ReqData) ->
     ResourceType = rabbit_mgmt_util:id(type, ReqData),         
     Resource = binary_to_list(rabbit_mgmt_util:id(resource, ReqData)),
     Topic = binary_to_list(rabbit_mgmt_util:id(topic, ReqData)),
+    TopicEncoded = edoc_lib:escape_uri(Topic),
     Callback = binary_to_list(rabbit_mgmt_util:id(callback, ReqData)),    
     CallbackEncoded = edoc_lib:escape_uri(Callback),
     Authorization = wrq:get_req_header("Authorization",ReqData),
@@ -160,7 +161,7 @@ get_hub_lease(ReqData) ->
                end,
     
     Method = get,
-    QueryParams = "hub.callback=" ++ CallbackEncoded ++ "&hub.topic=" ++ Topic,
+    QueryParams = "hub.callback=" ++ CallbackEncoded ++ "&hub.topic=" ++ TopicEncoded,
     URL = set_subscriptions_url(Server, PortStr, Vhost, TypeCode, Resource, QueryParams),
     HTTPOptions = [],
     Options = [],
@@ -191,6 +192,7 @@ delete_lease(ReqData) ->
     ResourceType = rabbit_mgmt_util:id(type, ReqData),         
     Resource = binary_to_list(rabbit_mgmt_util:id(resource, ReqData)),
     Topic = binary_to_list(rabbit_mgmt_util:id(topic, ReqData)),
+    TopicEncoded = edoc_lib:escape_uri(Topic),
     Callback = binary_to_list(rabbit_mgmt_util:id(callback, ReqData)),    
     CallbackEncoded = edoc_lib:escape_uri(Callback),
     Authorization = wrq:get_req_header("Authorization",ReqData),
@@ -209,7 +211,7 @@ delete_lease(ReqData) ->
     %% set other params   
     %% fix to accept exchanges need to fix get subscribers to inlcude resourcetypeatom 
     Method = delete,
-    QueryParams = "hub.mode=unsubscribe&hub.callback=" ++ CallbackEncoded ++ "&hub.topic=" ++ Topic,
+    QueryParams = "hub.mode=unsubscribe&hub.callback=" ++ CallbackEncoded ++ "&hub.topic=" ++ TopicEncoded,
     URL = set_delete_url(Server, PortStr, Vhost, TypeCode, Resource, QueryParams),         
     Type = "application/x-www-form-urlencoded",             
     %% make http request
@@ -240,6 +242,7 @@ unsubscribe_lease(ReqData) ->
     ResourceType = rabbit_mgmt_util:id(type, ReqData),         
     Resource = binary_to_list(rabbit_mgmt_util:id(resource, ReqData)),
     Topic = binary_to_list(rabbit_mgmt_util:id(topic, ReqData)),
+    TopicEncoded = edoc_lib:escape_uri(Topic),
     Callback = binary_to_list(rabbit_mgmt_util:id(callback, ReqData)),
     CallbackEncoded = edoc_lib:escape_uri(Callback),
     Authorization = wrq:get_req_header("Authorization",ReqData),
@@ -259,7 +262,7 @@ unsubscribe_lease(ReqData) ->
     Method = post,
     URL = set_unsubscribe_url(Server, PortStr, Vhost, TypeCode, Resource),
     Type = "application/x-www-form-urlencoded",
-    Body = "hub.mode=unsubscribe&hub.callback=" ++ CallbackEncoded ++ "&hub.topic=" ++ Topic ++ "&hub.verify=sync&hub.lease_seconds=1",
+    Body = "hub.mode=unsubscribe&hub.callback=" ++ CallbackEncoded ++ "&hub.topic=" ++ TopicEncoded ++ "&hub.verify=sync&hub.lease_seconds=1",
     %% make http request
     HTTPOptions = [],
     Options = [],
@@ -285,6 +288,7 @@ post_subscription_qs(ReqData) ->
     ResourceType = rabbit_mgmt_util:id(type, ReqData),         
     Resource = binary_to_list(rabbit_mgmt_util:id(resource, ReqData)),
     Topic = binary_to_list(rabbit_mgmt_util:id(topic, ReqData)),
+    TopicEncoded = edoc_lib:escape_uri(Topic),
     Callback = binary_to_list(rabbit_mgmt_util:id(callback, ReqData)),
     CallbackEncoded = edoc_lib:escape_uri(Callback),
     % add conditional contact info
@@ -347,7 +351,7 @@ post_subscription_qs(ReqData) ->
     
             Type = "application/x-www-form-urlencoded",
             LeaseStr = lists:flatten(io_lib:format("~p", [Lease])),            
-            Body = "hub.mode=subscribe&hub.callback=" ++ CallbackEncoded ++ "&hub.topic=" ++ Topic ++ "&hub.verify=sync&hub.lease_seconds=" ++ LeaseStr ++ "&hub.max_tps=" ++ MaxTpsStr,
+            Body = "hub.mode=subscribe&hub.callback=" ++ CallbackEncoded ++ "&hub.topic=" ++ TopicEncoded ++ "&hub.verify=sync&hub.lease_seconds=" ++ LeaseStr ++ "&hub.max_tps=" ++ MaxTpsStr,
             BodyBA = case BasicAuth of
                 undefined -> Body;
                 BA -> Body ++ "&hub.basic_auth=" ++ binary_to_list(BA)
